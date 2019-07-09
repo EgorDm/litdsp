@@ -11,7 +11,7 @@ pub fn hanning_f64<W: Dim>(window_size: W) -> ContainerRM<f64, U1, W> {
 }
 
 pub fn sinw_f64<W: Dim>(window_size: W, beta: f64) -> ContainerRM<f64, U1, W> {
-	let mut w = ContainerRM::regspace_cols(U1, window_size, 0.);
+	let mut w = ContainerRM::regspace_rows(U1, window_size, 0.);
 	(w * (f64::consts::PI / window_size.value() as f64)).sin().pow(beta)
 }
 
