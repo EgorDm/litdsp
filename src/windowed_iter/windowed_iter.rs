@@ -1,7 +1,7 @@
 use litcontainers::*;
 
 pub trait WindowedIter<'a, T, W, H>: Sized
-	where T: Scalar,  W: Dim, H: Dim
+	where T: Scalar, W: Dim, H: Dim
 {
 	type WC: Dim;
 	type WCS: Dim;
@@ -17,4 +17,12 @@ pub trait WindowedIter<'a, T, W, H>: Sized
 	fn hop_size(&self) -> usize { self.hop_dim().value() }
 
 	fn hop_dim(&self) -> H;
+
+	fn window_count(&self) -> usize;
+}
+
+pub trait WindowedIterMut<'a, T, W, H>: WindowedIter<'a, T, W, H>
+	where T: Scalar,  W: Dim, H: Dim
+{
+	fn next_window_mut<'at: 'b, 'b>(&'at mut self) -> Option<SliceMut<'b, T, Self::WR, Self::WRS, Self::WC, Self::WCS>>;
 }

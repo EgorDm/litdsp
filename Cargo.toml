@@ -7,3 +7,5 @@ edition = "2018"
 [dependencies]
 litcontainers = {path = "../litcontainers/litcontainers"}
 litaudio = {path = "../litaudio"}
+num-traits = "0.2"
+fftw = "0.6.0"
