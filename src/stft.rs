@@ -38,3 +38,46 @@ pub fn calculate_stft<C, S, W, H>(signal: S, window: ContainerRM<f64, U1, W>, ho
 pub fn calculate_time<D: Dim>(size: D, sr: f64) -> ContainerRM<f64, U1, D> {
 	ContainerRM::regspace_rows(U1, size, 0.) / sr
 }
+
+pub fn calculate_freq<W>(window_size: W) -> ContainerRM<f64, U1, <<W as DimNameDiv<U2>>::Output as DimAdd<U1>>::Output>
+	where W: Dim + DimNameDiv<U2>, <W as DimNameDiv<U2>>::Output: DimAdd<U1>
+{
+	let half_window_dim = <W as DimNameDiv<U2>>::div(window_size, U2).add(U1);
+	ContainerRM::regspace_rows(U1, half_window_dim, 0.) / 2.
+}
+
+pub fn freq_index(f: f64) -> usize { (f * 2.).round() as usize }
+
+pub fn compute_fourier_coefficients<C, S, W, H>(signal: S, window: ContainerRM<f64, U1, W>, hop_dim: H, freqs: Vec<f64>, sr: f64)
+	-> ContainerCM<c64, Dynamic, Dynamic>
+	where C: Dim, H: Dim, S: Storage<f64, U1, C>,
+	      W: Dim + DimNameDiv<U2>
+{
+	let window_dim = window.col_dim();
+	let window_half_dim = W::div(window_dim.clone(), U2);
+	let overlap = window_dim.value() - hop_dim.value();
+
+	let two_pi_t = ContainerRM::regspace_rows(U1, window_dim, 0.) * (f64::consts::PI * 2. / sr);
+	let window_count = (signal.col_count() - overlap) / (window_dim.value() - overlap);
+
+	let mut S = ContainerCM::zeros(Dynamic::new(freqs.len()), Dynamic::new(window_count));
+
+	for fi in 0..freqs.len() {
+		let two_pi_ft = &two_pi_t * freqs[fi];
+		let cosine = (&two_pi_ft).cos();
+		let sine = (&two_pi_ft).sin();
+
+		let mut window_iter = WindowedColIter::new(&signal, window.col_dim(), hop_dim);
+		let mut wi = 0;
+		while let Some(mut w) = window_iter.next_window_mut() {
+			w *= &window;
+			let co = (&w * &cosine).sum(); // TODO: implement streaming for more mem efficiency
+			let si = (&w * &sine).sum();
+
+			*S.get_mut(fi, wi) = c64::new(co, si);
+			wi += 1;
+		}
+	}
+
+	S
+}

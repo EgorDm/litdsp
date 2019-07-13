@@ -29,3 +29,22 @@ fn stft() {
 //	println!("{}", t);
 //	println!("{}", m);
 }
+
+
+#[test]
+fn compute_fourier_coefficients() {
+	let freq = 1.;
+	let fr = 6.;
+	let s = utils::generate_pulse(freq, U40, 0, fr, false);
+	let w = ContainerRM::from_value(U1, U12, 1.);
+	let f = (0..7).map(|x| x as f64 / 2.).collect();
+	let S = stft::compute_fourier_coefficients(s, w.clone_owned(), U6, f, fr);
+	let m = S.norm();
+
+	let fi = stft::freq_index(freq);
+	let freq_intens = S.slice(fi, 1..S.col_count() - 1).norm().mean();
+	assert_eq!(freq_intens.round() as i32, (w.sum().round() / 2.) as i32);
+
+	println!("{}", m);
+	let u = 0;
+}
