@@ -28,7 +28,7 @@ impl<'a, T, C, S, W, H> WindowedColIter<'a, T, C, S, W, H>
 		let cursor = -(pad_left as isize);
 		let cursor_end = data.col_dim().value() + pad_right;
 		let overlap = window_dim.value() - hop_dim.value();
-		let window_count = (cursor_end as isize - cursor - 1) as usize / (window_dim.value() - overlap);
+		let window_count = (cursor_end as isize - cursor - overlap as isize) as usize / (window_dim.value() - overlap);
 
 		Self {
 			storage: data,
@@ -93,7 +93,7 @@ impl<'a, T, C, S, W, H> WindowedIter<'a, T, W, H> for WindowedColIter<'a, T, C, 
 
 	fn hop_dim(&self) -> H { self.hop_size }
 
-	fn window_count(&self) -> usize { self.window_count }
+	fn window_count(&self) -> usize { self.window_count } // TODO: Please change this to dim
 }
 
 impl<'a, T, C, S, W, H> WindowedIterMut<'a, T, W, H> for WindowedColIter<'a, T, C, S, W, H>

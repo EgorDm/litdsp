@@ -14,6 +14,11 @@ fn windowed_col_iter() {
 
 	assert_eq!(iter.window_count(), 3);
 	assert_eq!(ws, vec![vec![0., 1., 2.], vec![2., 3., 4.], vec![4., 0., 0.]]);
+
+	let s = ContainerRM::from_vec(U1, Dynamic::new(40), vec![0; 40]);
+	let slice = s.slice_rows(0);
+	let mut iter = WindowedColIter::new_padded(&slice, U12, U6, 0, 0);
+	assert_eq!(iter.window_count(), 5);
 }
 
 #[test]
