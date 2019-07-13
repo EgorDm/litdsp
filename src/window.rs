@@ -3,15 +3,15 @@ use std::f64;
 
 pub fn hanning_f64<W: Dim>(window_size: W) -> ContainerRM<f64, U1, W> {
 	let mut w = ContainerRM::zeros(U1, window_size);
-	let N = (window_size.value() - 1) as f64;
+	let n = (window_size.value() - 1) as f64;
 	for i in 0..window_size.value() {
-		*w.get_mut_at(i) = 0.5 * (1. - (f64::consts::PI * 2. * i as f64 / N).cos());
+		*w.get_mut_at(i) = 0.5 * (1. - (f64::consts::PI * 2. * i as f64 / n).cos());
 	}
 	w
 }
 
 pub fn sinw_f64<W: Dim>(window_size: W, beta: f64) -> ContainerRM<f64, U1, W> {
-	let mut w = ContainerRM::regspace_rows(U1, window_size, 0.);
+	let w = ContainerRM::regspace_rows(U1, window_size, 0.);
 	(w * (f64::consts::PI / window_size.value() as f64)).sin().pow(beta)
 }
 
