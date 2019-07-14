@@ -16,11 +16,11 @@ fn stft() {
 	let (S, sr) = stft::calculate_stft(s, w.clone_owned(), U6, true, fr);
 	let m = S.norm();
 
-	let mut f = stft::calculate_freq(w.col_dim());
-	let mut t = stft::calculate_time(S.col_dim(), sr);
+	let f = stft::calculate_freq(w.col_dim());
+	let t = stft::calculate_time(S.col_dim(), sr);
 	let fi = stft::freq_index(freq);
 
-	let freq_intens = S.slice(fi, 1..S.col_count() - 1).norm().mean();
+	let freq_intens = m.slice(fi, 1..S.col_count() - 1).mean();
 	assert_eq!(freq_intens.round() as i32, (w.sum().round() / 2.) as i32);
 	assert_eq!(t.as_slice(), [0., 1., 2., 3., 4., 5., 6.]);
 	assert_eq!(f.as_slice(), [0.0, 0.5, 1., 1.5, 2.,  2.5, 3.]);
@@ -46,5 +46,4 @@ fn compute_fourier_coefficients() {
 	assert_eq!(freq_intens.round() as i32, (w.sum().round() / 2.) as i32);
 
 	println!("{}", m);
-	let u = 0;
 }

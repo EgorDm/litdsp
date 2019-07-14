@@ -2,10 +2,7 @@ use litcontainers::*;
 use crate::{WindowedColIter, WindowedIter, WindowedIterMut};
 use fftw::plan::*;
 use fftw::types::Flag;
-use std::ops::Div;
 use std::f64;
-use num_traits::Float;
-use num_traits::real::Real;
 
 // TODO: use size hinting at more places
 pub fn calculate_stft<C, S, W, H>(signal: S, window: ContainerRM<f64, U1, W>, hop_size: H, pad: bool, sr: f64)
@@ -54,7 +51,6 @@ pub fn compute_fourier_coefficients<C, S, W, H>(signal: S, window: ContainerRM<f
 	      W: Dim + DimNameDiv<U2>
 {
 	let window_dim = window.col_dim();
-	let window_half_dim = W::div(window_dim.clone(), U2);
 	let overlap = window_dim.value() - hop_dim.value();
 
 	let two_pi_t = ContainerRM::regspace_rows(U1, window_dim, 0.) * (f64::consts::PI * 2. / sr);
