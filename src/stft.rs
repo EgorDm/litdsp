@@ -58,22 +58,23 @@ pub fn compute_fourier_coefficients<C, S, W, H>(signal: S, window: ContainerRM<f
 
 	let mut S = ContainerCM::zeros(Dynamic::new(freqs.len()), Dynamic::new(window_count));
 
-	for fi in 0..freqs.len() {
-		let two_pi_ft = &two_pi_t * freqs[fi];
-		let cosine = (&two_pi_ft).cos();
-		let sine = (&two_pi_ft).sin();
+	S.as_row_slice_par_mut_iter()
+		.zip(freqs.clone())
+		.for_each(|(mut row, f)| {
+			let two_pi_ft = &two_pi_t * f;
+			let cosine = (&two_pi_ft).cos();
+			let sine = (&two_pi_ft).sin();
 
-		let mut window_iter = WindowedColIter::new(&signal, window.col_dim(), hop_dim);
-		let mut wi = 0;
-		while let Some(mut w) = window_iter.next_window_mut() {
-			w *= &window;
-			let co = (&w * &cosine).sum(); // TODO: implement streaming for more mem efficiency
-			let si = (&w * &sine).sum();
+			let mut window_iter = WindowedColIter::new(&signal, window.col_dim(), hop_dim);
+			let mut wi = 0;
+			while let Some(mut w) = window_iter.next_window_mut() {
+				w *= &window;
+				let co = (&w * &cosine).sum(); // TODO: implement streaming for more mem efficiency
+				let si = (&w * &sine).sum();
 
-			*S.get_mut(fi, wi) = c64::new(co, si);
-			wi += 1;
-		}
-	}
-
+				*row.get_mut(0, wi) = c64::new(co, si);
+				wi += 1;
+			}
+		});
 	S
 }

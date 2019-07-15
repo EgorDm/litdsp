@@ -73,16 +73,16 @@ impl<'a, T, C, S, W, H> WindowedIter<'a, T, W, H> for WindowedColIter<'a, T, C, 
 			}
 
 			if pad_left > 0 {
-				assign_all(self.buffer.slice_as_col_mut_iter(0..pad_left), T::default());
+				assign_all(self.buffer.slice_cols_as_mut_iter(0..pad_left), T::default());
 			}
 
 			if pad_right > 0 {
-				assign_all(self.buffer.slice_as_col_mut_iter((self.window_size() - pad_right)..self.window_size()), T::default());
+				assign_all(self.buffer.slice_cols_as_mut_iter((self.window_size() - pad_right)..self.window_size()), T::default());
 			}
 
 			copy_all(
-				self.buffer.slice_as_col_mut_iter(pad_left..(self.window_size() - pad_right)),
-				self.storage.slice_as_col_iter(copy_start..copy_end)
+				self.buffer.slice_cols_as_mut_iter(pad_left..(self.window_size() - pad_right)),
+				self.storage.slice_cols_as_iter(copy_start..copy_end)
 			);
 
 			Some(self.buffer.slice_rows(0))
@@ -114,16 +114,16 @@ impl<'a, T, C, S, W, H> WindowedIterMut<'a, T, W, H> for WindowedColIter<'a, T, 
 			let pad_right = end - copy_end;
 
 			if pad_left > 0 {
-				assign_all(self.buffer.slice_as_col_mut_iter(0..pad_left), T::default());
+				assign_all(self.buffer.slice_cols_as_mut_iter(0..pad_left), T::default());
 			}
 
 			if pad_right > 0 {
-				assign_all(self.buffer.slice_as_col_mut_iter((self.window_size() - pad_right)..self.window_size()), T::default());
+				assign_all(self.buffer.slice_cols_as_mut_iter((self.window_size() - pad_right)..self.window_size()), T::default());
 			}
 
 			copy_all(
-				self.buffer.slice_as_col_mut_iter(pad_left..(self.window_size() - pad_right)),
-				self.storage.slice_as_col_iter(copy_start..copy_end)
+				self.buffer.slice_cols_as_mut_iter(pad_left..(self.window_size() - pad_right)),
+				self.storage.slice_cols_as_iter(copy_start..copy_end)
 			);
 
 			Some(self.buffer.slice_rows_mut(0))
