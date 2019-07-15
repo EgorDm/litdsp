@@ -4,7 +4,7 @@ use fftw::plan::*;
 use fftw::types::Flag;
 use std::f64;
 
-// TODO: use size hinting at more places
+#[allow(non_snake_case)]// TODO: use size hinting at more places
 pub fn calculate_stft<C, S, W, H>(signal: S, window: ContainerRM<f64, U1, W>, hop_dim: H, pad: bool, sr: f64)
 	-> (ContainerCM<c64, <<W as DimNameDiv<U2>>::Output as DimAdd<U1>>::Output, Dynamic>, f64)
 	where C: Dim, H: Dim, S: Storage<f64, U1, C>,
@@ -41,6 +41,7 @@ pub fn calculate_freq<W>(window_size: W) -> ContainerRM<f64, U1, <<W as DimNameD
 
 pub fn freq_index(f: f64) -> usize { (f * 2.).round() as usize }
 
+#[allow(non_snake_case)]
 pub fn compute_fourier_coefficients<C, S, W, H>(signal: S, window: ContainerRM<f64, U1, W>, hop_dim: H, freqs: Vec<f64>, sr: f64)
 	-> (ContainerCM<c64, Dynamic, Dynamic>, f64)
 	where C: Dim, H: Dim, S: Storage<f64, U1, C>,
