@@ -1,12 +1,12 @@
 pub mod windowed_iter;
 pub mod stft;
 pub mod window;
-pub mod utils;
+pub mod wave;
 
 pub use windowed_iter::*;
 pub use stft::*;
 pub use window::*;
-pub use utils::*;
+pub use wave::*;
 
 #[cfg(test)]
 mod tests {
