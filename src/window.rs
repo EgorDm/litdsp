@@ -14,6 +14,18 @@ pub fn hanning<D: Dim>(size: D) -> RowVec<f64, D> {
 	w
 }
 
+/// Hamming window
+/// # Arguments
+/// * `size` - Nr of taps
+pub fn hamming<D: Dim>(size: D) -> RowVec<f64, D> {
+	let mut w = RowVec::zeros(U1, size);
+	let n = (size.value() - 1) as f64;
+	for i in 0..size.value() {
+		*w.get_mut_at(i) = 0.54 - 0.46 * (f64::consts::PI * 2. * i as f64 / n).cos();
+	}
+	w
+}
+
 /// Sin window
 pub fn sinw<D: Dim>(size: D, beta: f64) -> RowVec<f64, D> {
 	let w = RowVec::regspace_rows(U1, size, 0.);

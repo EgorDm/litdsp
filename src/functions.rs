@@ -1,8 +1,10 @@
 use std::f64;
 use litcontainers::*;
 
+const EPSILON: f64 = 0.000001; // TOOD: move to consts
+
 pub fn sinc(x: f64) -> f64 {
-	if x == 0. {
+	if x.abs() < EPSILON {
 		1.
 	} else {
 		let pix = f64::consts::PI * x;
@@ -26,3 +28,12 @@ pub fn besseli0(x: f64) -> f64 {
 	y
 }
 
+pub fn gcd(mut a: i32, mut b: i32) -> i32 {
+	let mut tmp = 0;
+	while a > 0 {
+		tmp = a;
+		a = b % a;
+		b = tmp;
+	}
+	b
+}
