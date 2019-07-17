@@ -5,6 +5,7 @@ pub mod wave;
 pub mod functions;
 pub mod resample;
 pub mod filters;
+pub mod constants;
 
 pub use windowed_iter::*;
 pub use stft::*;
@@ -13,6 +14,7 @@ pub use wave::*;
 pub use functions::*;
 pub use resample::*;
 pub use filters::*;
+pub use constants::*;
 
 #[cfg(test)]
 mod tests {
