@@ -20,7 +20,7 @@ pub fn besseli0(x: f64) -> f64 {
 	let mut y = 1.0;
 	let mut s = 1.0;
 	let mut n = 1;
-	while x > y * 1.0e-9 {
+	while s > y * 1.0e-9 {
 		s *= x2 / 4.0 / (n * n) as f64;
 		y += s;
 		n += 1;
@@ -36,4 +36,13 @@ pub fn gcd(mut a: i32, mut b: i32) -> i32 {
 		b = tmp;
 	}
 	b
+}
+
+/// Fancy ceil(a / b)
+pub fn quotient_ceil(a: usize, b: usize) -> usize {
+	if a % b != 0 {
+		a / b + 1
+	} else {
+		a / b
+	}
 }

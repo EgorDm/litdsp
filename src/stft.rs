@@ -1,5 +1,5 @@
 use litcontainers::*;
-use crate::{WindowedColIter, WindowedIter, WindowedIterMut};
+use crate::windowed_iter::*;
 use fftw::plan::*;
 use fftw::types::Flag;
 use std::f64;

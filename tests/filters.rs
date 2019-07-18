@@ -4,12 +4,12 @@ use litdsp::{filters, constants};
 #[test]
 pub fn firls() {
 	let fac = 2.;
-	let f = RowVec::from_vec(U1, U4, vec![0., 1. / fac, 1. / fac, 1.]);
-	let a = RowVec::from_vec(U1, U4, vec![1., 1., 0., 0.]);
+	let f = RowVec::from_vec(U1, U4, &[0., 1. / fac, 1. / fac, 1.]);
+	let a = RowVec::from_vec(U1, U4, &[1., 1., 0., 0.]);
 	let n = U40;
 
 	let h = filters::firls(n, f, a);
-	let target = vec![
+	let target = &[
 		-0.00000000000000001949085916259688, -0.016753151904410037, 0.000000000000000019490859162596877,
 		0.018724110951987685, -0.000000000000000019490859162596877, -0.02122065907891938,
 		0.000000000000000019490859162596877, 0.024485375860291588, -0.000000000000000019490859162596877,

@@ -45,7 +45,6 @@ pub fn firls<D, F>(l: D, mut f: RowVec<f64, F>, a: RowVec<f64, F>)
 			*bi += dw / (4. * PI * PI) * ((PI2 * k[i] * f2).cos() - (PI2 * k[i] * f1).cos()) / (k[i] * k[i]);
 			*bi += (f2 * (dw * f2 + b1) * sinc(2. * k[i] * f2))
 				- (f1 * (dw * f1 + b1) * sinc(2. * k[i] * f1));
-			let test = 0;
 		}
 	}
 
