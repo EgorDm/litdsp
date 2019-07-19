@@ -1,5 +1,4 @@
 use litcontainers::*;
-use litdsp::*;
 use litdsp::windowed_iter::*;
 
 #[test]

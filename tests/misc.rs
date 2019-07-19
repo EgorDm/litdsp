@@ -7,5 +7,5 @@ pub fn resample() {
 	let fr = 6.;
 	let s = wave::generate_wave(freq, U40, 0, fr, false);
 
-	let sa = resample::resample(s, 2, 1);
+	let sa = resampling::resample(&s, 2, 1);
 }
