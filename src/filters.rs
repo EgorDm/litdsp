@@ -5,8 +5,6 @@ use std::f64::consts::PI;
 
 const PI2: f64 = 2. * PI;
 
-type Sub1Div2<D> = <<D as DimSub<U1>>::Output as DimDiv<U2>>::Output;
-
 /// Least-squares linear-phase FIR filter designcollapse [Usage](https://www.mathworks.com/help/signal/ref/firls.html)
 /// # Arguments
 /// * `n` - Filter length
