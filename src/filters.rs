@@ -5,7 +5,7 @@ use std::f64::consts::PI;
 
 const PI2: f64 = 2. * PI;
 
-/// Least-squares linear-phase FIR filter designcollapse [Usage](https://www.mathworks.com/help/signal/ref/firls.html)
+/// Least-squares linear-phase FIR filter design [Usage](https://www.mathworks.com/help/signal/ref/firls.html)
 /// # Arguments
 /// * `n` - Filter length
 /// * `f` - Vector of pairs of frequency points, specified in the range between 0 and 1, where 1 corresponds to the Nyquist frequency.

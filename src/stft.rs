@@ -4,8 +4,17 @@ use fftw::plan::*;
 use fftw::types::Flag;
 use std::f64;
 
+/// Calculates Short-time Fourier transform
+/// For this FFTW library is used for DFT calculation
+/// Results in a container with columns containing frequency data and rows containing temporal data
+/// # Arguments
+/// * `s` - Given input signal
+/// * `w` - window. Amount of frequency bins generated corresponds to (window_length / 2 + 1)
+/// * `hop_dim` - correlates to the amount of windows taken and amount of temporal data generated
+/// * `pad` - whether signal should be padded first. Padding will be window_length / 2  at negin and end of the signal
+/// * `sr` - signal sampling rate
 #[allow(non_snake_case)]// TODO: use size hinting at more places
-pub fn calculate_stft<C, S, W, H>(signal: S, window: ContainerRM<f64, U1, W>, hop_dim: H, pad: bool, sr: f64)
+pub fn calculate_stft<C, S, W, H>(s: S, window: ContainerRM<f64, U1, W>, hop_dim: H, pad: bool, sr: f64)
 	-> (ContainerCM<c64, <<W as DimNameDiv<U2>>::Output as DimAdd<U1>>::Output, Dynamic>, f64)
 	where C: Dim, H: Dim, S: Storage<f64, U1, C>,
 	      W: Dim + DimNameDiv<U2>,
@@ -15,7 +24,7 @@ pub fn calculate_stft<C, S, W, H>(signal: S, window: ContainerRM<f64, U1, W>, ho
 	let half_window_dim = <W as DimNameDiv<U2>>::div(window.col_dim(), U2).add(U1);
 
 	let padding = if pad { window_dim.value() / 2 } else { 0 };
-	let mut window_iter = WindowedColIter::new_padded(&signal, window.col_dim(), hop_dim, padding, padding);
+	let mut window_iter = WindowedColIter::new_padded(&s, window.col_dim(), hop_dim, padding, padding);
 	let mut S = ContainerCM::zeros(half_window_dim, Dynamic::new(window_iter.window_count()));
 	let mut plan = R2CPlan64::aligned(&[window_dim.value()], Flag::Estimate).unwrap();
 

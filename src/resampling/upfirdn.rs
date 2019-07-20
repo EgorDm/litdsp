@@ -2,17 +2,18 @@ use litcontainers::*;
 use crate::functions;
 use std::cmp::{max, min};
 use num_traits::real::Real;
+use num_traits::Float;
 
-struct Upfirdn {
+struct Upfirdn<T: Scalar + Float> {
 	p: usize,
 	q: usize,
-	coefs_t: ContainerRM<f64, Dynamic, Dynamic>,
+	coefs_t: ContainerRM<T, Dynamic, Dynamic>,
 	coefs_per_phase: usize
 }
 
 macro_rules! get_n_advance {
 	($ptr: ident) => ({
-		let ret = &*$ptr;
+		let ret = *$ptr;
 		$ptr = $ptr.offset(1);
 		ret
 	})
@@ -29,8 +30,8 @@ pub unsafe fn offset_from<T: Sized>(target: *const T, origin: *const T) -> isize
 	isize::wrapping_sub(target as isize, origin as isize) / pointee_size as isize
 }
 
-impl Upfirdn {
-	pub fn new(p: usize, q: usize, coefs: RowVec<f64, Dynamic>) -> Self {
+impl<T: Scalar + Float> Upfirdn<T> {
+	pub fn new(p: usize, q: usize, coefs: RowVec<T, Dynamic>) -> Self {
 		let coefs_per_phase = functions::quotient_ceil(coefs.size(), p);
 		let padded_coef_count = coefs_per_phase * p;
 		let mut coefs_t = ContainerRM::zeros(D!(p), D!(coefs_per_phase));
@@ -52,7 +53,9 @@ impl Upfirdn {
 
 	pub fn coefs_per_phase(&self) -> usize { self.coefs_per_phase }
 
-	pub fn apply<D: Dim>(&self, input: &RowVec<f64, D>) -> RowVec<f64, Dynamic> {
+	pub fn apply<D, S>(&self, input: &S) -> RowVec<T, Dynamic>
+		where D: Dim, S: RowVecStorage<T, D>
+	{
 		let mut ret = rvec_zeros!(Dynamic::new(self.out_count(input.col_count())));
 
 		// TODO: this whole thing is built around shifting pointers. How to keep is safe without speed penalty?
@@ -65,7 +68,7 @@ impl Upfirdn {
 			let window_size = self.coefs_per_phase as isize - 1;
 
 			while cursor < end {
-				let mut acc = 0.;
+				let mut acc = T::default();
 				let offset = min(offset_from(cursor, start), window_size);
 				let mut h = self.coefs_t.as_row_ptr(phase).offset(window_size - offset);
 				let mut cursor_before = cursor.offset(-offset);
@@ -87,10 +90,18 @@ impl Upfirdn {
 	}
 }
 
-pub fn upfirdn<D: Dim>(s: &RowVec<f64, D>, p: usize, q: usize, coefs: RowVec<f64, Dynamic>)
-	-> RowVec<f64, Dynamic> {
+/// Polyphrase FIR resampler [source](https://sourceforge.net/motorola/upfirdn/home/Home/)
+/// # Arguments
+/// * `s` - input siganal
+/// * `p` - upsampling rate
+/// * `q` - downsampling rate
+/// * `coefs` - FIR filter
+pub fn upfirdn<T, D, S>(s: &S, p: usize, q: usize, coefs: RowVec<T, Dynamic>)
+	-> RowVec<T, Dynamic>
+	where T: Scalar + Float, D: Dim, S: RowVecStorage<T, D>
+{
 	let m = Upfirdn::new(p, q, coefs);
-	let padding = rvec_zeros!(D!(m.coefs_per_phase()); f64);
+	let padding = rvec_zeros!(D!(m.coefs_per_phase()); T);
 	let sa = join_cols!(s, padding);
 	m.apply(&sa)
 }
