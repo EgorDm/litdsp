@@ -1,7 +1,6 @@
 use litcontainers::*;
 use crate::functions;
-use std::cmp::{max, min};
-use num_traits::real::Real;
+use std::cmp::{min};
 use num_traits::Float;
 
 struct Upfirdn<T: Scalar + Float> {
@@ -33,7 +32,6 @@ pub unsafe fn offset_from<T: Sized>(target: *const T, origin: *const T) -> isize
 impl<T: Scalar + Float> Upfirdn<T> {
 	pub fn new(p: usize, q: usize, coefs: RowVec<T, Dynamic>) -> Self {
 		let coefs_per_phase = functions::quotient_ceil(coefs.size(), p);
-		let padded_coef_count = coefs_per_phase * p;
 		let mut coefs_t = ContainerRM::zeros(D!(p), D!(coefs_per_phase));
 
 		for r in 0..p {
@@ -74,8 +72,6 @@ impl<T: Scalar + Float> Upfirdn<T> {
 				let mut cursor_before = cursor.offset(-offset);
 
 				while cursor_before <= cursor {
-					let a = *cursor_before;
-					let b = *h;
 					acc += get_n_advance!(cursor_before) * get_n_advance!(h);
 				}
 

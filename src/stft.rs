@@ -5,7 +5,7 @@ use fftw::types::Flag;
 use std::f64;
 
 /// Calculates Short-time Fourier transform
-/// For this FFTW library is used for DFT calculation
+/// For this FFTW library is used for FFT calculation
 /// Results in a container with columns containing frequency data and rows containing temporal data
 /// # Arguments
 /// * `s` - Given input signal
@@ -50,8 +50,17 @@ pub fn calculate_freq<W>(window_size: W) -> ContainerRM<f64, U1, <<W as DimNameD
 
 pub fn freq_index(f: f64) -> usize { (f * 2.).round() as usize }
 
+/// Calculates Short-time Fourier transform based on provided fequencies
+/// Uses DFT algorithm for freq calculation
+/// Results in a container with columns containing frequency data and rows containing temporal data
+/// # Arguments
+/// * `s` - Given input signal
+/// * `w` - window. Amount of frequency bins generated corresponds to (window_length / 2 + 1)
+/// * `hop_dim` - correlates to the amount of windows taken and amount of temporal data generated
+/// * `freqs` - frequencies thet need to be sampled
+/// * `sr` - signal sampling rate
 #[allow(non_snake_case)]
-pub fn compute_fourier_coefficients<C, S, W, H>(signal: S, window: ContainerRM<f64, U1, W>, hop_dim: H, freqs: Vec<f64>, sr: f64)
+pub fn compute_fourier_coefficients<C, S, W, H>(s: S, window: ContainerRM<f64, U1, W>, hop_dim: H, freqs: Vec<f64>, sr: f64)
 	-> (ContainerCM<c64, Dynamic, Dynamic>, f64)
 	where C: Dim, H: Dim, S: Storage<f64, U1, C>,
 	      W: Dim + DimNameDiv<U2>
@@ -60,7 +69,7 @@ pub fn compute_fourier_coefficients<C, S, W, H>(signal: S, window: ContainerRM<f
 	let overlap = window_dim.value() - hop_dim.value();
 
 	let two_pi_t = ContainerRM::regspace_rows(U1, window_dim, 0.) * (f64::consts::PI * 2. / sr);
-	let window_count = (signal.col_count() - overlap) / (window_dim.value() - overlap);
+	let window_count = (s.col_count() - overlap) / (window_dim.value() - overlap);
 
 	let mut S = ContainerCM::zeros(Dynamic::new(freqs.len()), Dynamic::new(window_count));
 
@@ -71,7 +80,7 @@ pub fn compute_fourier_coefficients<C, S, W, H>(signal: S, window: ContainerRM<f
 			let cosine = (&two_pi_ft).cos();
 			let sine = (&two_pi_ft).sin();
 
-			let mut window_iter = WindowedColIter::new(&signal, window.col_dim(), hop_dim);
+			let mut window_iter = WindowedColIter::new(&s, window.col_dim(), hop_dim);
 			let mut wi = 0;
 			while let Some(mut w) = window_iter.next_window_mut() {
 				w *= &window;

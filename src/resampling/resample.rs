@@ -30,7 +30,7 @@ pub fn resample<D>(s: &RowVec<f64, D>, p: usize, q: usize) -> RowVec<f64, Dynami
 	let fac = 0.5 / K as f64;
 	let f = rvec!(U4, &[0., 2. * fac, 2. * fac, 1.]);
 	let a = rvec!(U4, &[1., 1., 0., 0.]);
-	let filter_len = (2 * n * K + 1);
+	let filter_len = 2 * n * K + 1;
 	let filter_len_half =  (filter_len - 1) / 2;
 	let mut filter = filters::firls(D!(filter_len - 1), f, a);
 	let window = window::kaiser(D!(filter_len), 5.);
