@@ -1,7 +1,15 @@
 use litcontainers::*;
 use itertools::{Itertools, MinMaxResult};
 use num_traits::Signed;
+// TODO:  Make generic over storage
 
+/// 1-D data interpolation
+/// Interpolates to nearest neighbour from input values
+/// # Arguments
+/// * `axis_in` - Input axis
+/// * `values_in` - Input values
+/// * `axis_out` - Output axis
+/// * `values_out` - Output values
 pub fn interp1_nearest_cols<TA, TV, AI, AO, C>(axis_in: &ColVec<TA, AI>, values_in: &ContainerRM<TV, AI, C>, axis_out: &ColVec<TA, AO>, values_out: &mut ContainerRM<TV, AO, C>)
 	where TA: ElementaryScalar + Signed, TV: Scalar, AI: Dim, AO: Dim, C: Dim
 {
