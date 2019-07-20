@@ -50,11 +50,10 @@ impl Upfirdn {
 		functions::quotient_ceil(in_count * self.p, self.q)
 	}
 
+	pub fn coefs_per_phase(&self) -> usize { self.coefs_per_phase }
+
 	pub fn apply<D: Dim>(&self, input: &RowVec<f64, D>) -> RowVec<f64, Dynamic> {
 		let mut ret = rvec_zeros!(Dynamic::new(self.out_count(input.col_count())));
-
-		println!("{}", &input);
-
 
 		// TODO: this whole thing is built around shifting pointers. How to keep is safe without speed penalty?
 		unsafe {
@@ -70,7 +69,6 @@ impl Upfirdn {
 				let offset = min(offset_from(cursor, start), window_size);
 				let mut h = self.coefs_t.as_row_ptr(phase).offset(window_size - offset);
 				let mut cursor_before = cursor.offset(-offset);
-				let test2 = self.coefs_t.calc_index(phase, 0);
 
 				while cursor_before <= cursor {
 					let a = *cursor_before;
@@ -92,5 +90,7 @@ impl Upfirdn {
 pub fn upfirdn<D: Dim>(s: &RowVec<f64, D>, p: usize, q: usize, coefs: RowVec<f64, Dynamic>)
 	-> RowVec<f64, Dynamic> {
 	let m = Upfirdn::new(p, q, coefs);
-	m.apply(s)
+	let padding = rvec_zeros!(D!(m.coefs_per_phase()); f64);
+	let sa = join_cols!(s, padding);
+	m.apply(&sa)
 }

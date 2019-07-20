@@ -37,5 +37,6 @@ pub fn resample<D>(s: &RowVec<f64, D>, p: usize, q: usize) -> RowVec<f64, Dynami
 	h.slice_cols_mut(SizedRange::new(pad_before, filter.col_dim())).copy_from(&filter);
 
 	// Resample upfirdn
-	upfirdn(s, p, q, h)
+	let ret = upfirdn(s, p, q, h); // TODO: can we avoid all those copies etc like padding? and v
+	ret.slice_cols(SizedRange::new(delay, D!(output_size))).clone_owned()
 }
