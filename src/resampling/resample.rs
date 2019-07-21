@@ -14,8 +14,8 @@ use std::cmp::max;
 /// * `p` - upsampling rate
 /// * `q` - downsampling rate
 #[allow(non_snake_case)]
-pub fn resample<D>(s: &RowVec<f64, D>, p: usize, q: usize) -> RowVec<f64, Dynamic>
-	where D: Dim
+pub fn resample<D, S>(s: &S, p: usize, q: usize) -> RowVec<f64, Dynamic>
+	where D: Dim, S: RowVecStorage<f64, D>
 {
 	let gcd = functions::gcd_t(p, q);
 	let (p, q) = (p / gcd, q / gcd);
