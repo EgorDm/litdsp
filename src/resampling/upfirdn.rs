@@ -20,12 +20,6 @@ macro_rules! get_n_advance {
 	})
 }
 
-unsafe fn get_n_advance_mut<T: Sized>(ptr: &mut *mut T) -> &mut T {
-	let ret = &mut *(*ptr);
-	*ptr = ptr.offset(1);
-	ret
-}
-
 pub unsafe fn offset_from<T: Sized>(target: *const T, origin: *const T) -> isize {
 	let pointee_size = std::mem::size_of::<T>();
 	isize::wrapping_sub(target as isize, origin as isize) / pointee_size as isize
@@ -74,7 +68,6 @@ impl<T: Scalar + Float> Upfirdn<T> {
 			//let mut phase = 0; // Equal to (i * q) % p
 			let window_size_max = self.coefs_per_phase as isize - 1;
 
-			let it_count = (input.size() * self.p) / self.q;
 			ret.as_mut_slice().par_iter_mut().enumerate().for_each(|(i, out_cursor)| {
 				let iq = i * self.q;
 				let phase = iq % self.p;
@@ -105,12 +98,11 @@ impl<T: Scalar + Float> Upfirdn<T> {
 		// TODO: this whole thing is built around shifting pointers. How to keep is safe without speed penalty?
 		unsafe {
 			let start = input.get_ptr_unchecked(0, 0);
-			let holder = Holder { start };
 			let mut cursor = start; // Equal to (i * q) / p
 			let mut phase = 0; // Equal to (i * q) % p
 			let window_size = self.coefs_per_phase as isize - 1;
 
-			for (i, out_cursor) in ret.as_mut_slice().iter_mut().enumerate() {
+			for out_cursor in ret.as_mut_slice().iter_mut() {
 				let mut acc = T::default();
 				let window = min(offset_from(cursor, start), window_size);
 				let mut h = self.coefs_t.as_row_ptr(phase).offset(window_size - window);

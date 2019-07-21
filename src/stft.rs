@@ -14,17 +14,17 @@ use std::f64;
 /// * `pad` - whether signal should be padded first. Padding will be window_length / 2  at negin and end of the signal
 /// * `sr` - signal sampling rate
 #[allow(non_snake_case)]// TODO: use size hinting at more places
-pub fn calculate_stft<C, S, W, H>(s: S, window: ContainerRM<f64, U1, W>, hop_dim: H, pad: bool, sr: f64)
-	-> (ContainerCM<c64, <<W as DimNameDiv<U2>>::Output as DimAdd<U1>>::Output, Dynamic>, f64)
+pub fn calculate_stft<C, S, W, H>(s: &S, window: ContainerRM<f64, U1, W>, hop_dim: H, pad: bool, sr: f64)
+	-> (ContainerCM<c64, <<W as DimDiv<U2>>::Output as DimAdd<U1>>::Output, Dynamic>, f64)
 	where C: Dim, H: Dim, S: Storage<f64, U1, C>,
-	      W: Dim + DimNameDiv<U2>,
-	      <W as DimNameDiv<U2>>::Output: DimAdd<U1>
+	      W: Dim + DimDiv<U2>,
+	      <W as DimDiv<U2>>::Output: DimAdd<U1>
 {
 	let window_dim = window.col_dim();
-	let half_window_dim = <W as DimNameDiv<U2>>::div(window.col_dim(), U2).add(U1);
+	let half_window_dim = <W as DimDiv<U2>>::div(window.col_dim(), U2).add(U1);
 
 	let padding = if pad { window_dim.value() / 2 } else { 0 };
-	let mut window_iter = WindowedColIter::new_padded(&s, window.col_dim(), hop_dim, padding, padding);
+	let mut window_iter = WindowedColIter::new_padded(s, window.col_dim(), hop_dim, padding, padding);
 	let mut S = ContainerCM::zeros(half_window_dim, Dynamic::new(window_iter.window_count()));
 	let mut plan = R2CPlan64::aligned(&[window_dim.value()], Flag::Estimate).unwrap();
 
@@ -60,10 +60,10 @@ pub fn freq_index(f: f64) -> usize { (f * 2.).round() as usize }
 /// * `freqs` - frequencies thet need to be sampled
 /// * `sr` - signal sampling rate
 #[allow(non_snake_case)]
-pub fn compute_fourier_coefficients<C, S, W, H>(s: S, window: ContainerRM<f64, U1, W>, hop_dim: H, freqs: Vec<f64>, sr: f64)
-	-> (ContainerCM<c64, Dynamic, Dynamic>, f64)
-	where C: Dim, H: Dim, S: Storage<f64, U1, C>,
-	      W: Dim + DimNameDiv<U2>
+pub fn compute_fourier_coefficients<C, S, W, H, F>(s: &S, window: ContainerRM<f64, U1, W>, hop_dim: H, freqs: &RowVec<f64, F>, sr: f64)
+	-> (ContainerCM<c64, F, Dynamic>, f64)
+	where C: Dim, H: Dim, S: RowVecStorage<f64, C>, F: Dim,
+	      W: Dim + DimDiv<U2>
 {
 	let window_dim = window.col_dim();
 	let overlap = window_dim.value() - hop_dim.value();
@@ -71,16 +71,16 @@ pub fn compute_fourier_coefficients<C, S, W, H>(s: S, window: ContainerRM<f64, U
 	let two_pi_t = ContainerRM::regspace_rows(U1, window_dim, 0.) * (f64::consts::PI * 2. / sr);
 	let window_count = (s.col_count() - overlap) / (window_dim.value() - overlap);
 
-	let mut S = ContainerCM::zeros(Dynamic::new(freqs.len()), Dynamic::new(window_count));
+	let mut S = ContainerCM::zeros(freqs.col_dim(), Dynamic::new(window_count));
 
 	S.as_row_slice_par_mut_iter()
-		.zip(freqs.clone())
+		.zip(freqs.as_iter())
 		.for_each(|(mut row, f)| {
-			let two_pi_ft = &two_pi_t * f;
+			let two_pi_ft = &two_pi_t * *f;
 			let cosine = (&two_pi_ft).cos();
 			let sine = (&two_pi_ft).sin();
 
-			let mut window_iter = WindowedColIter::new(&s, window.col_dim(), hop_dim);
+			let mut window_iter = WindowedColIter::new(s, window.col_dim(), hop_dim);
 			let mut wi = 0;
 			while let Some(mut w) = window_iter.next_window_mut() {
 				w *= &window;
