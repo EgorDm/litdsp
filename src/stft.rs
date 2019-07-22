@@ -84,8 +84,9 @@ pub fn compute_fourier_coefficients<C, S, W, H, F>(s: &S, window: ContainerRM<f6
 			let mut wi = 0;
 			while let Some(mut w) = window_iter.next_window_mut() {
 				w *= &window;
-				let co = (&w * &cosine).sum(); // TODO: implement streaming for more mem efficiency
-				let si = (&w * &sine).sum();
+
+				let co = w.as_iter().zip(cosine.as_iter()).map(|(a, b)| a * b).sum(); // (&w * &cosine).sum()
+				let si = w.as_iter().zip(sine.as_iter()).map(|(a, b)| a * b).sum(); // (&w * &sine)
 
 				*row.get_mut(0, wi) = c64::new(co, si);
 				wi += 1;
