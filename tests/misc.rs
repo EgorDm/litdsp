@@ -16,18 +16,3 @@ pub fn resample() {
 		0.058308913060188594, -0.4999999999999993, -0.9767660326110593, -1.0, -0.5213919054209354,
 	]);
 }
-
-mod test_litio {
-	use std::path::PathBuf;
-	use litaudio::*;
-	use litcontainers::*;
-	use litdsp::*;
-
-	#[test]
-	fn test_bench() {
-		let mut in_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-		in_path.push("assets/test_audio.wav");
-		let s: AudioDeinterleaved<f64, U1, Dynamic> = litio::read_audio(in_path.as_path()).unwrap();
-		let u = resampling::resample(&s, 13, 7);
-	}
-}

@@ -90,6 +90,7 @@ impl<T: Scalar + Float> Upfirdn<T> {
 		ret
 	}
 
+	#[allow(dead_code)]
 	pub fn apply<D, S>(&self, input: &S) -> RowVec<T, Dynamic>
 		where D: Dim, S: RowVecStorage<T, D>
 	{
