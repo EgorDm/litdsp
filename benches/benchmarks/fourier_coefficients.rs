@@ -13,7 +13,7 @@ fn compute_fourier_coefficients_benchmark(c: &mut Criterion) {
 	let freqs = RowVec::regspace_rows(U1, D!(30), 80.) * 60.;
 	c.bench_function("compute_fourier_coefficients", move |b| b.iter(|| {
 		let s = &audio;
-		stft::compute_fourier_coefficients(s, w.clone_owned(), hop_dim, &freqs, s.sample_rate() as f64);
+		stft::calculate_fourier_coefficients(s, w.clone_owned(), hop_dim, &freqs, s.sample_rate() as f64);
 	}));
 }
 

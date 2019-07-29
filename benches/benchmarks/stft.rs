@@ -11,7 +11,7 @@ fn stft_benchmark(c: &mut Criterion) {
 	let hop_dim = D!((audio.sample_rate() / 2) as usize);
 	c.bench_function("stft", move |b| b.iter(|| {
 		let s = &audio;
-		stft::calculate_stft(s, w.clone_owned(), hop_dim, true, s.sample_rate() as f64);
+		stft::calculate_stft(s, &w, hop_dim, true, s.sample_rate() as f64);
 	}));
 }
 

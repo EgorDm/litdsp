@@ -4,6 +4,8 @@ use fftw::plan::*;
 use fftw::types::Flag;
 use std::f64;
 
+// TODO: can we add f32 variants?
+
 /// Calculates Short-time Fourier transform
 /// For this FFTW library is used for FFT calculation
 /// Results in a container with columns containing frequency data and rows containing temporal data
@@ -14,7 +16,7 @@ use std::f64;
 /// * `pad` - whether signal should be padded first. Padding will be window_length / 2  at negin and end of the signal
 /// * `sr` - signal sampling rate
 #[allow(non_snake_case)]// TODO: use size hinting at more places
-pub fn calculate_stft<C, S, W, H>(s: &S, window: ContainerRM<f64, U1, W>, hop_dim: H, pad: bool, sr: f64)
+pub fn calculate_stft<C, S, W, H>(s: &S, window: &ContainerRM<f64, U1, W>, hop_dim: H, pad: bool, sr: f64)
 	-> (ContainerCM<c64, <<W as DimDiv<U2>>::Output as DimAdd<U1>>::Output, Dynamic>, f64)
 	where C: Dim, H: Dim, S: Storage<f64, U1, C>,
 	      W: Dim + DimDiv<U2>,
@@ -30,7 +32,7 @@ pub fn calculate_stft<C, S, W, H>(s: &S, window: ContainerRM<f64, U1, W>, hop_di
 
 	let mut cursor = 0;
 	while let Some(mut w) = window_iter.next_window_mut() {
-		w *= &window;
+		w *= window;
 
 		let mut wS = S.slice_cols_mut(cursor);
 		plan.r2c(w.as_mut_slice(), wS.as_mut_slice()).unwrap();
@@ -41,10 +43,10 @@ pub fn calculate_stft<C, S, W, H>(s: &S, window: ContainerRM<f64, U1, W>, hop_di
 	(S, sr / hop_dim.value() as f64)
 }
 
-pub fn calculate_freq<W>(window_size: W) -> ContainerRM<f64, U1, <<W as DimNameDiv<U2>>::Output as DimAdd<U1>>::Output>
-	where W: Dim + DimNameDiv<U2>, <W as DimNameDiv<U2>>::Output: DimAdd<U1>
+pub fn calculate_freq<W>(window_size: W) -> ContainerRM<f64, U1, <<W as DimDiv<U2>>::Output as DimAdd<U1>>::Output>
+	where W: Dim + DimDiv<U2>, <W as DimDiv<U2>>::Output: DimAdd<U1>
 {
-	let half_window_dim = <W as DimNameDiv<U2>>::div(window_size, U2).add(U1);
+	let half_window_dim = <W as DimDiv<U2>>::div(window_size, U2).add(U1);
 	ContainerRM::regspace_rows(U1, half_window_dim, 0.) / 2.
 }
 
@@ -60,7 +62,7 @@ pub fn freq_index(f: f64) -> usize { (f * 2.).round() as usize }
 /// * `freqs` - frequencies thet need to be sampled
 /// * `sr` - signal sampling rate
 #[allow(non_snake_case)]
-pub fn compute_fourier_coefficients<C, S, W, H, F>(s: &S, window: ContainerRM<f64, U1, W>, hop_dim: H, freqs: &RowVec<f64, F>, sr: f64)
+pub fn calculate_fourier_coefficients<C, S, W, H, F>(s: &S, window: ContainerRM<f64, U1, W>, hop_dim: H, freqs: &RowVec<f64, F>, sr: f64)
 	-> (ContainerCM<c64, F, Dynamic>, f64)
 	where C: Dim, H: Dim, S: RowVecStorage<f64, C>, F: Dim,
 	      W: Dim + DimDiv<U2>
