@@ -39,3 +39,40 @@ fn conv2() {
 		0., 0., 0., 0.
 	]);
 }
+
+#[test]
+fn padding() {
+	let s = ContainerRM::regspace_rows(U3, U3, 1);
+
+	assert_eq!(functions::pad_cols(&s, U2, U2, true).as_slice(), &[
+		1, 1, 1, 2, 3, 3, 3,
+		1, 1, 1, 2, 3, 3, 3,
+		1, 1, 1, 2, 3, 3, 3,
+	]);
+
+	assert_eq!(functions::pad_cols(&s, U2, U2, false).as_slice(), &[
+		0, 0, 1, 2, 3, 0, 0,
+		0, 0, 1, 2, 3, 0, 0,
+		0, 0, 1, 2, 3, 0, 0,
+	]);
+
+	assert_eq!(functions::pad_rows(&s, U2, U2, true).as_slice(), &[
+		1, 2, 3,
+		1, 2, 3,
+		1, 2, 3,
+		1, 2, 3,
+		1, 2, 3,
+		1, 2, 3,
+		1, 2, 3,
+	]);
+
+	assert_eq!(functions::pad_rows(&s, U2, U2, false).as_slice(), &[
+		0, 0, 0,
+		0, 0, 0,
+		1, 2, 3,
+		1, 2, 3,
+		1, 2, 3,
+		0, 0, 0,
+		0, 0, 0,
+	]);
+}
