@@ -35,7 +35,7 @@ fn compute_fourier_coefficients() {
 	let s = wave::generate_wave(freq, U40, 0, fr, false);
 	let w = ContainerRM::from_value(U1, U12, 1.);
 	let f = RowVec::regspace_rows(U1, U7 , 0.) / 2. ;
-	let (S, _sr) = stft::calculate_fourier_coefficients(&s, w.clone_owned(), U6, &f, fr);
+	let (S, _sr) = stft::calculate_fourier_coefficients(&s, &w, U6, &f, fr);
 	let m = S.norm();
 
 	let fi = stft::freq_index(freq);

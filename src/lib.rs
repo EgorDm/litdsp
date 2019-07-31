@@ -7,6 +7,7 @@ pub mod filters;
 pub mod constants;
 pub mod resampling;
 
+pub use functions::*;
 
 #[cfg(test)]
 mod tests {

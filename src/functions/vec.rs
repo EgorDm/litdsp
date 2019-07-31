@@ -10,8 +10,11 @@ use num_traits::Signed;
 /// * `values_in` - Input values
 /// * `axis_out` - Output axis
 /// * `values_out` - Output values
-pub fn interp1_nearest_cols<TA, TV, AI, AO, C>(axis_in: &ColVec<TA, AI>, values_in: &ContainerRM<TV, AI, C>, axis_out: &ColVec<TA, AO>, values_out: &mut ContainerRM<TV, AO, C>)
-	where TA: ElementaryScalar + Signed, TV: Scalar, AI: Dim, AO: Dim, C: Dim
+pub fn interp1_nearest_cols<TA, TV, AI, AIS, IS, AO, AOS, OS, C>(axis_in: &AIS, values_in: &IS, axis_out: &AOS, values_out: &mut OS)
+	where TA: ElementaryScalar + Signed, TV: Scalar,
+	      AI: Dim, AO: Dim, C: Dim,
+	      AIS: ColVecStorage<TA, AI>, IS: Storage<TV, AI, C>,
+	      AOS: ColVecStorage<TA, AO>, OS: StorageMut<TV, AO, C>
 {
 	assert!(axis_in.row_count() == values_in.row_count() && axis_out.row_count() == axis_out.row_count() && values_in.col_count() == values_out.col_count(), "Container dimensions are not valid");
 	let (axis_in_min, axis_in_max) = match axis_in.as_col_iter().minmax() {

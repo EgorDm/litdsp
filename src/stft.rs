@@ -62,8 +62,8 @@ pub fn freq_index(f: f64) -> usize { (f * 2.).round() as usize }
 /// * `freqs` - frequencies thet need to be sampled
 /// * `sr` - signal sampling rate
 #[allow(non_snake_case)]
-pub fn calculate_fourier_coefficients<C, S, W, H, F>(s: &S, window: ContainerRM<f64, U1, W>, hop_dim: H, freqs: &RowVec<f64, F>, sr: f64)
-	-> (ContainerCM<c64, F, Dynamic>, f64)
+pub fn calculate_fourier_coefficients<C, S, W, H, F>(s: &S, window: &ContainerRM<f64, U1, W>, hop_dim: H, freqs: &RowVec<f64, F>, sr: f64)
+	-> (ContainerRM<c64, F, Dynamic>, f64)
 	where C: Dim, H: Dim, S: RowVecStorage<f64, C>, F: Dim,
 	      W: Dim + DimDiv<U2>
 {
@@ -73,7 +73,7 @@ pub fn calculate_fourier_coefficients<C, S, W, H, F>(s: &S, window: ContainerRM<
 	let two_pi_t = ContainerRM::regspace_rows(U1, window_dim, 0.) * (f64::consts::PI * 2. / sr);
 	let window_count = (s.col_count() - overlap) / (window_dim.value() - overlap);
 
-	let mut S = ContainerCM::zeros(freqs.col_dim(), Dynamic::new(window_count));
+	let mut S = ContainerRM::zeros(freqs.col_dim(), Dynamic::new(window_count));
 
 	S.as_row_slice_par_mut_iter()
 		.zip(freqs.as_iter())
@@ -85,7 +85,7 @@ pub fn calculate_fourier_coefficients<C, S, W, H, F>(s: &S, window: ContainerRM<
 			let mut window_iter = WindowedColIter::new(s, window.col_dim(), hop_dim);
 			let mut wi = 0;
 			while let Some(mut w) = window_iter.next_window_mut() {
-				w *= &window;
+				w *= window;
 
 				let co = w.as_iter().zip(cosine.as_iter()).map(|(a, b)| a * b).sum(); // (&w * &cosine).sum()
 				let si = w.as_iter().zip(sine.as_iter()).map(|(a, b)| a * b).sum(); // (&w * &sine)
