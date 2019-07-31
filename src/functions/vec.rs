@@ -35,7 +35,7 @@ pub fn interp1_nearest_cols<TA, TV, AI, AIS, IS, AO, AOS, OS, C>(axis_in: &AIS, 
 		if axis_out_val < axis_in_min {
 			values_out.slice_rows_mut(i).copy_from(&values_in.slice_rows(0));
 		} else if axis_out_val > axis_in_max {
-			values_out.slice_rows_mut(i).copy_from(&values_in.slice_rows(axis_size_out - 1));
+			values_out.slice_rows_mut(i).copy_from(&values_in.slice_rows(axis_size_in - 1));
 		} else {
 			for j in best_j..axis_size_in {
 				let err = (axis_in[j] - axis_out_val).abs();
