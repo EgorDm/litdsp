@@ -1,7 +1,5 @@
 use litcontainers::*;
-use itertools::Itertools;
-use num_traits::pow::Pow;
-use num_traits::{Float, Signed};
+use num_traits::{Signed};
 
 pub fn normalize_cols_p1_inplace<T, R, C, S>(s: &mut S)
 	where T: Scalar + Signed, R: Dim, C: Dim, S: StorageMut<T, R, C>

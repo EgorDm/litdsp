@@ -26,6 +26,11 @@ pub fn hamming<D: Dim>(size: D) -> RowVec<f64, D> {
 	w
 }
 
+/// Constant size window
+pub fn constant<D: Dim>(size: D) -> RowVec<f64, D> {
+	RowVec::regspace_rows(U1, size, 1.)
+}
+
 /// Sin window
 pub fn sinw<D: Dim>(size: D, beta: f64) -> RowVec<f64, D> {
 	let w = RowVec::regspace_rows(U1, size, 0.);

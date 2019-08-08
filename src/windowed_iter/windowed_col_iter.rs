@@ -4,11 +4,11 @@ use crate::windowed_iter::{WindowedIter, WindowedIterMut};
 use std::cmp::{max, min};
 use litcontainers::iterator::iter_tools::{assign_all, copy_all};
 
-pub struct WindowedColIter<'a, T, C, S, W, H>
-	where T: Scalar, C: Dim, S: Storage<T, U1, C>, W: Dim, H: Dim
+pub struct WindowedColIter<'a, T, R, C, S, W, H>
+	where T: Scalar, C: Dim, R: Dim, S: Storage<T, R, C>, W: Dim, H: Dim
 {
 	storage: &'a S,
-	buffer: ContainerRM<T, U1, W>,
+	buffer: ContainerRM<T, R, W>,
 	window_size: W,
 	hop_size: H,
 	cursor: isize,
@@ -17,8 +17,8 @@ pub struct WindowedColIter<'a, T, C, S, W, H>
 	_phantoms: PhantomData<(C)>
 }
 
-impl<'a, T, C, S, W, H> WindowedColIter<'a, T, C, S, W, H>
-	where T: Scalar, C: Dim, S: Storage<T, U1, C>, W: Dim, H: Dim
+impl<'a, T, R, C, S, W, H> WindowedColIter<'a, T, R, C, S, W, H>
+	where T: Scalar, C: Dim, R: Dim, S: Storage<T, R, C>, W: Dim, H: Dim
 {
 	pub fn new(data: &'a S, window_dim: W, hop_dim: H) -> Self {
 		Self::new_padded(data, window_dim, hop_dim, 0, 0)
@@ -32,7 +32,7 @@ impl<'a, T, C, S, W, H> WindowedColIter<'a, T, C, S, W, H>
 
 		Self {
 			storage: data,
-			buffer: ContainerRM::zeros(U1, window_dim),
+			buffer: ContainerRM::zeros(data.row_dim(), window_dim),
 			window_size: window_dim,
 			hop_size: hop_dim,
 			cursor,
@@ -43,12 +43,12 @@ impl<'a, T, C, S, W, H> WindowedColIter<'a, T, C, S, W, H>
 	}
 }
 
-impl<'a, T, C, S, W, H> WindowedIter<'a, T, W, H> for WindowedColIter<'a, T, C, S, W, H>
-	where T: Scalar, C: Dim, S: Storage<T, U1, C>, W: Dim, H: Dim
+impl<'a, T, R, C, S, W, H> WindowedIter<'a, T, W, H> for WindowedColIter<'a, T, R, C, S, W, H>
+	where T: Scalar, C: Dim, R: Dim, S: Storage<T, R, C>, W: Dim, H: Dim
 {
 	type WC = W;
 	type WCS = U1;
-	type WR = U1;
+	type WR = R;
 	type WRS = W;
 
 	fn next_window<'at: 'b, 'b>(&'at mut self) -> Option<Slice<'b, T, Self::WR, Self::WRS, Self::WC, Self::WCS>>  {
@@ -65,7 +65,7 @@ impl<'a, T, C, S, W, H> WindowedIter<'a, T, W, H> for WindowedColIter<'a, T, C, 
 			let pad_left = (copy_start as isize - start) as usize;
 			let pad_right = end - copy_end;
 
-			if pad_left == 0 && pad_right == 0 {
+			if pad_left == 0 && pad_right == 0 && self.storage.col_stride() == 1 {
 				return Some(
 					self.storage.slice_cols(SizedRange::new(start as usize, self.window_dim()))
 						.transmute_stride_dims_inplace(self.window_dim(), U1)
@@ -85,7 +85,11 @@ impl<'a, T, C, S, W, H> WindowedIter<'a, T, W, H> for WindowedColIter<'a, T, C, 
 				self.storage.slice_cols_as_iter(copy_start..copy_end)
 			);
 
-			Some(self.buffer.slice_rows(0))
+
+
+			Some(
+				self.buffer.slice_cols(SizedRange::new(0, self.window_dim()))
+			)
 		}
 	}
 
@@ -96,8 +100,8 @@ impl<'a, T, C, S, W, H> WindowedIter<'a, T, W, H> for WindowedColIter<'a, T, C, 
 	fn window_count(&self) -> usize { self.window_count } // TODO: Please change this to dim
 }
 
-impl<'a, T, C, S, W, H> WindowedIterMut<'a, T, W, H> for WindowedColIter<'a, T, C, S, W, H>
-	where T: Scalar, C: Dim, S: Storage<T, U1, C>, W: Dim, H: Dim
+impl<'a, T, R, C, S, W, H> WindowedIterMut<'a, T, W, H> for WindowedColIter<'a, T, R, C, S, W, H>
+	where T: Scalar, R: Dim, C: Dim, S: Storage<T, R, C>, W: Dim, H: Dim
 {
 	fn next_window_mut<'at: 'b, 'b>(&'at mut self) -> Option<SliceMut<'b, T, Self::WR, Self::WRS, Self::WC, Self::WCS>> {
 		let start = self.cursor;
@@ -126,7 +130,7 @@ impl<'a, T, C, S, W, H> WindowedIterMut<'a, T, W, H> for WindowedColIter<'a, T, 
 				self.storage.slice_cols_as_iter(copy_start..copy_end)
 			);
 
-			Some(self.buffer.slice_rows_mut(0))
+			Some(self.buffer.slice_cols_mut(SizedRange::new(0, self.window_dim())))
 		}
 	}
 }
