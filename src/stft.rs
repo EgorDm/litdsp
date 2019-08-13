@@ -3,6 +3,7 @@ use crate::windowed_iter::*;
 use fftw::plan::*;
 use fftw::types::Flag;
 use std::f64;
+use rayon::prelude::*;
 
 // TODO: can we add f32 variants?
 
@@ -75,7 +76,7 @@ pub fn calculate_fourier_coefficients<C, S, W, H, F>(s: &S, window: &ContainerRM
 
 	let mut S = ContainerRM::zeros(freqs.col_dim(), Dynamic::new(window_count));
 
-	S.as_row_slice_par_mut_iter()
+	S.as_row_slice_mut_iter() // todo: as_row_slice_par_mut_iter
 		.zip(freqs.as_iter())
 		.for_each(|(mut row, f)| {
 			let two_pi_ft = &two_pi_t * *f;
