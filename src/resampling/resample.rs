@@ -21,7 +21,10 @@ pub fn resample<S>(s: &S, p: usize, q: usize) -> RowVec<f64, Dynamic>
 	let (p, q) = (p / gcd, q / gcd);
 
 	if q == p {
-		return s.transmute_dims(U1, Dynamic::new(s.cols()), s.row_stride_dim(), s.col_stride_dim()).clone_owned();
+		return s.transmute_dims(
+			Size::new(U1, Dynamic::new(s.cols())),
+			s.strides()
+		).clone_owned();
 	}
 	let K = max(p, q);
 
