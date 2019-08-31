@@ -64,7 +64,7 @@ impl<'a, T, S, W, H> WindowedIter<'a, T, W, H> for WindowedColIter<'a, T, S, W, 
 			if pad_left == 0 && pad_right == 0 && self.storage.col_stride() == 1 {
 				return Some(
 					self.storage.slice_cols(SizedRange::new(start as usize, self.window_dim()))
-						.transmute_stride_dims(Strides::new(self.window_dim(), U1))
+						.transmute_stride_dims_inplace(Strides::new(self.window_dim(), U1))
 				);
 			}
 

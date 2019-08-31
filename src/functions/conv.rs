@@ -22,8 +22,10 @@ pub fn conv2_full<T, W, G>(w: &W, g: &G)
 	let h = g.flip();
 
 	let mut x = ContainerRM::zeros(Size::new(D!(w.rows() + 2 * (h.rows() - 1)), D!(w.cols() + 2 * (h.cols() - 1))));
-	x.slice_mut(SizedRange::new(h.rows() - 1, w.row_dim()), SizedRange::new(h.cols() - 1, w.col_dim()))
-		.copy_from(w);
+	x.slice_mut(
+		SizedRange::new(h.rows() - 1, w.row_dim()),
+		SizedRange::new(h.cols() - 1, w.col_dim())
+	).copy_from(w);
 
 	let mut out = ContainerRM::zeros(Size::new(out_rows, out_cols));
 

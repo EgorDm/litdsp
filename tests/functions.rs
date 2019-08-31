@@ -15,7 +15,7 @@ fn interp1_nearest() {
 #[test]
 fn conv2() {
 	//w.slice_mut(1..3, 1..3).fill(1.);
-	let w = ContainerRM::from_vec(U4, U4, &[
+	let w = ContainerRM::from_vec(Size::new(U4, U4), &[
 		0., 0., 0., 0.,
 		0., 1., 1., 0.,
 		0., 1., 1., 0.,
@@ -42,7 +42,7 @@ fn conv2() {
 
 #[test]
 fn padding() {
-	let s = ContainerRM::regspace_rows(U3, U3, 1);
+	let s = ContainerRM::regspace(Size::new(U3, U3), RowAxis, 1);
 
 	assert_eq!(functions::pad_cols(&s, U2, U2, true).as_slice(), &[
 		1, 1, 1, 2, 3, 3, 3,

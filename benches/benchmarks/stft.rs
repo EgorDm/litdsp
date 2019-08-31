@@ -7,7 +7,7 @@ use litdsp::stft;
 // TODO: optimize. Goal 21.96ms -> lower. Already better than c++
 fn stft_benchmark(c: &mut Criterion) {
 	let audio = setup_audio();
-	let w = RowVec::from_value(U1, D!(audio.sample_rate() as usize), 1.);
+	let w = RowVec::from_value(Size::new(U1, D!(audio.sample_rate() as usize)), 1.);
 	let hop_dim = D!((audio.sample_rate() / 2) as usize);
 	c.bench_function("stft", move |b| b.iter(|| {
 		let s = &audio;

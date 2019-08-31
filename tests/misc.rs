@@ -8,7 +8,7 @@ pub fn resample() {
 	let s = wave::generate_wave(freq, U10, 0, fr, false);
 	let sa = resampling::resample(&s, 2, 1);
 
-	assert_eq!(s.col_count() * 2, sa.col_count());
+	assert_eq!(s.cols() * 2, sa.cols());
 	assert_eq!(sa.as_slice(), [ // TODO: mayby use epsilon as threshold?
 		1.0, 0.9767660326110599, 0.5000000000000001, -0.05830891306018805, -0.49999999999999983,
 		-0.8335852134237004, -1.0, -0.8808440881331612, -0.5000000000000004, -0.0000000000000002914335439641036,

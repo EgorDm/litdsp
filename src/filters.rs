@@ -50,11 +50,11 @@ pub fn firls<D, F>(l: D, mut f: RowVec<f64, F>, a: RowVec<f64, F>)
 	let a = (b * 4.) / 2.;
 
 	//let ret = RowVec::zeros(Size::new(U1, n));
+	let a_flipped  =a.flip();
 	if is_odd {
-		join_cols!(&a.flip(), &a.slice_cols(1..a.cols()); n)
-		//unsafe { ret.join_cols_unchecked(&a.flip(), &a.slice_cols(1..a.col_count()) }
+		let right = a.slice_cols(1..a.cols());
+		join_cols!(&a_flipped, &right; n)
 	} else {
-		//unsafe { ret.join_cols_unchecked(&a.flip(), &a) }
-		join_cols!(&a.flip(), &a; n)
+		join_cols!(&a_flipped, &a; n)
 	}
 }

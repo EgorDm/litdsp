@@ -4,8 +4,8 @@ use litdsp::{filters, constants};
 #[test]
 pub fn firls() {
 	let fac = 2.;
-	let f = RowVec::from_vec(U1, U4, &[0., 1. / fac, 1. / fac, 1.]);
-	let a = RowVec::from_vec(U1, U4, &[1., 1., 0., 0.]);
+	let f = RowVec::from_vec(Size::new(U1, U4), &[0., 1. / fac, 1. / fac, 1.]);
+	let a = RowVec::from_vec(Size::new(U1, U4), &[1., 1., 0., 0.]);
 	let n = U40;
 
 	let h = filters::firls(n, f, a);

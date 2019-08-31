@@ -8,7 +8,7 @@ use litdsp::stft;
 fn compute_fourier_coefficients_benchmark(c: &mut Criterion) {
 	let audio = setup_audio();
 
-	let w = RowVec::from_value(U1, D!(audio.sample_rate() as usize), 1.);
+	let w = RowVec::from_value(Size::new(U1, D!(audio.sample_rate() as usize)), 1.);
 	let hop_dim = D!((audio.sample_rate() / 2) as usize);
 	let freqs = RowVec::regspace_rows(U1, D!(30), 80.) * 60.;
 	c.bench_function("compute_fourier_coefficients", move |b| b.iter(|| {
