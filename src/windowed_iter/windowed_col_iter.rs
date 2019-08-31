@@ -1,24 +1,21 @@
 use litcontainers::*;
-use std::marker::PhantomData;
 use crate::windowed_iter::{WindowedIter, WindowedIterMut};
 use std::cmp::{max, min};
-use litcontainers::iterator::iter_tools::{assign_all, copy_all};
 
-pub struct WindowedColIter<'a, T, R, C, S, W, H>
-	where T: Scalar, C: Dim, R: Dim, S: Storage<T, R, C>, W: Dim, H: Dim
+pub struct WindowedColIter<'a, T, S, W, H>
+	where T: Scalar, S: Storage<T>, W: Dim, H: Dim
 {
 	storage: &'a S,
-	buffer: ContainerRM<T, R, W>,
+	buffer: ContainerRM<T, S::Rows, W>,
 	window_size: W,
 	hop_size: H,
 	cursor: isize,
 	cursor_end: usize,
-	window_count: usize,
-	_phantoms: PhantomData<(C)>
+	window_count: usize
 }
 
-impl<'a, T, R, C, S, W, H> WindowedColIter<'a, T, R, C, S, W, H>
-	where T: Scalar, C: Dim, R: Dim, S: Storage<T, R, C>, W: Dim, H: Dim
+impl<'a, T, S, W, H> WindowedColIter<'a, T, S, W, H>
+	where T: Scalar, S: Storage<T>, W: Dim, H: Dim
 {
 	pub fn new(data: &'a S, window_dim: W, hop_dim: H) -> Self {
 		Self::new_padded(data, window_dim, hop_dim, 0, 0)
@@ -32,23 +29,22 @@ impl<'a, T, R, C, S, W, H> WindowedColIter<'a, T, R, C, S, W, H>
 
 		Self {
 			storage: data,
-			buffer: ContainerRM::zeros(data.row_dim(), window_dim),
+			buffer: ContainerRM::zeros(Size::new(data.row_dim(), window_dim)),
 			window_size: window_dim,
 			hop_size: hop_dim,
 			cursor,
 			cursor_end,
 			window_count,
-			_phantoms: PhantomData
 		}
 	}
 }
 
-impl<'a, T, R, C, S, W, H> WindowedIter<'a, T, W, H> for WindowedColIter<'a, T, R, C, S, W, H>
-	where T: Scalar, C: Dim, R: Dim, S: Storage<T, R, C>, W: Dim, H: Dim
+impl<'a, T, S, W, H> WindowedIter<'a, T, W, H> for WindowedColIter<'a, T, S, W, H>
+	where T: Scalar, S: Storage<T>, W: Dim, H: Dim
 {
 	type WC = W;
 	type WCS = U1;
-	type WR = R;
+	type WR = S::Rows;
 	type WRS = W;
 
 	fn next_window<'at: 'b, 'b>(&'at mut self) -> Option<Slice<'b, T, Self::WR, Self::WRS, Self::WC, Self::WCS>>  {
@@ -61,7 +57,7 @@ impl<'a, T, R, C, S, W, H> WindowedIter<'a, T, W, H> for WindowedColIter<'a, T, 
 			self.cursor += self.hop_size() as isize;
 
 			let copy_start = max(start, 0) as usize;
-			let copy_end = min(end, self.storage.col_count()) ;
+			let copy_end = min(end, self.storage.cols()) ;
 			let pad_left = (copy_start as isize - start) as usize;
 			let pad_right = end - copy_end;
 
@@ -73,16 +69,16 @@ impl<'a, T, R, C, S, W, H> WindowedIter<'a, T, W, H> for WindowedColIter<'a, T, 
 			}
 
 			if pad_left > 0 {
-				assign_all(self.buffer.slice_cols_as_mut_iter(0..pad_left), T::default());
+				assign_all(self.buffer.as_col_range_iter_mut(0..pad_left), T::default());
 			}
 
 			if pad_right > 0 {
-				assign_all(self.buffer.slice_cols_as_mut_iter((self.window_size() - pad_right)..self.window_size()), T::default());
+				assign_all(self.buffer.as_col_range_iter_mut((self.window_size() - pad_right)..self.window_size()), T::default());
 			}
 
 			copy_all(
-				self.buffer.slice_cols_as_mut_iter(pad_left..(self.window_size() - pad_right)),
-				self.storage.slice_cols_as_iter(copy_start..copy_end)
+				self.buffer.as_col_range_iter_mut(pad_left..(self.window_size() - pad_right)),
+				self.storage.as_col_range_iter(copy_start..copy_end)
 			);
 
 
@@ -100,8 +96,8 @@ impl<'a, T, R, C, S, W, H> WindowedIter<'a, T, W, H> for WindowedColIter<'a, T, 
 	fn window_count(&self) -> usize { self.window_count } // TODO: Please change this to dim
 }
 
-impl<'a, T, R, C, S, W, H> WindowedIterMut<'a, T, W, H> for WindowedColIter<'a, T, R, C, S, W, H>
-	where T: Scalar, R: Dim, C: Dim, S: Storage<T, R, C>, W: Dim, H: Dim
+impl<'a, T, S, W, H> WindowedIterMut<'a, T, W, H> for WindowedColIter<'a, T, S, W, H>
+	where T: Scalar, S: Storage<T>, W: Dim, H: Dim
 {
 	fn next_window_mut<'at: 'b, 'b>(&'at mut self) -> Option<SliceMut<'b, T, Self::WR, Self::WRS, Self::WC, Self::WCS>> {
 		let start = self.cursor;
@@ -113,21 +109,21 @@ impl<'a, T, R, C, S, W, H> WindowedIterMut<'a, T, W, H> for WindowedColIter<'a, 
 			self.cursor += self.hop_size() as isize;
 
 			let copy_start = max(start, 0) as usize;
-			let copy_end = min(end, self.storage.col_count()) ;
+			let copy_end = min(end, self.storage.cols()) ;
 			let pad_left = (copy_start as isize - start) as usize;
 			let pad_right = end - copy_end;
 
 			if pad_left > 0 {
-				assign_all(self.buffer.slice_cols_as_mut_iter(0..pad_left), T::default());
+				assign_all(self.buffer.as_col_range_iter_mut(0..pad_left), T::default());
 			}
 
 			if pad_right > 0 {
-				assign_all(self.buffer.slice_cols_as_mut_iter((self.window_size() - pad_right)..self.window_size()), T::default());
+				assign_all(self.buffer.as_col_range_iter_mut((self.window_size() - pad_right)..self.window_size()), T::default());
 			}
 
 			copy_all(
-				self.buffer.slice_cols_as_mut_iter(pad_left..(self.window_size() - pad_right)),
-				self.storage.slice_cols_as_iter(copy_start..copy_end)
+				self.buffer.as_col_range_iter_mut(pad_left..(self.window_size() - pad_right)),
+				self.storage.as_col_range_iter(copy_start..copy_end)
 			);
 
 			Some(self.buffer.slice_cols_mut(SizedRange::new(0, self.window_dim())))

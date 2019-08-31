@@ -24,11 +24,11 @@ pub fn firls<D, F>(l: D, mut f: RowVec<f64, F>, a: RowVec<f64, F>)
 	let is_odd = (n.value() % 2) == 1;
 
 	let k_dim = m.add(U1);
-	let k = RowVec::regspace_rows(U1, k_dim.clone(), if !is_odd { 0.5 } else { 0. });
+	let k = RowVec::regspace(Size::new(U1, k_dim.clone()), RowAxis, if !is_odd { 0.5 } else { 0. });
 
 	// Differentiate
 	let mut b0 = 0.;
-	let mut b = RowVec::from_value(U1, k_dim, 0.);
+	let mut b = RowVec::from_value(Size::new(U1, k_dim), 0.);
 	for ((f1, a1), (f2, a2)) in f.as_iter().zip(a.as_iter()).tuples() {
 		let freq_diff = f2 - f1;
 		let dw = (a2 - a1) / freq_diff;
@@ -49,10 +49,12 @@ pub fn firls<D, F>(l: D, mut f: RowVec<f64, F>, a: RowVec<f64, F>)
 	if is_odd { b[0] = b0; }
 	let a = (b * 4.) / 2.;
 
-	let ret = RowVec::zeros(U1, n);
+	//let ret = RowVec::zeros(Size::new(U1, n));
 	if is_odd {
-		unsafe { ret.join_cols_unchecked(&a.flip(), &a.slice_cols(1..a.col_count())) }
+		join_cols!(&a.flip(), &a.slice_cols(1..a.cols()); n)
+		//unsafe { ret.join_cols_unchecked(&a.flip(), &a.slice_cols(1..a.col_count()) }
 	} else {
-		unsafe { ret.join_cols_unchecked(&a.flip(), &a) }
+		//unsafe { ret.join_cols_unchecked(&a.flip(), &a) }
+		join_cols!(&a.flip(), &a; n)
 	}
 }

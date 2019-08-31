@@ -1,24 +1,22 @@
 use litcontainers::*;
-use std::marker::PhantomData;
 use crate::windowed_iter::{WindowedIter, WindowedIterMut};
 use std::cmp::{max, min};
 use litcontainers::iterator::iter_tools::{assign_all, copy_all};
 
-pub struct WindowedRowIter<'a, T, R, C, S, W, H>
-	where T: Scalar, R: Dim, C: Dim, S: Storage<T, R, C>, W: Dim, H: Dim
+pub struct WindowedRowIter<'a, T, S, W, H>
+	where T: Scalar, S: Storage<T>, W: Dim, H: Dim
 {
 	storage: &'a S,
-	buffer: ContainerCM<T, W, C>,
+	buffer: ContainerCM<T, W, S::Cols>,
 	window_size: W,
 	hop_size: H,
 	cursor: isize,
 	cursor_end: usize,
 	window_count: usize,
-	_phantoms: PhantomData<(R)>
 }
 
-impl<'a, T, R, C, S, W, H> WindowedRowIter<'a, T, R, C, S, W, H>
-	where T: Scalar, R: Dim, C: Dim, S: Storage<T, R, C>, W: Dim, H: Dim
+impl<'a, T, S, W, H> WindowedRowIter<'a, T, S, W, H>
+	where T: Scalar, S: Storage<T>, W: Dim, H: Dim
 {
 	pub fn new(data: &'a S, window_dim: W, hop_dim: H) -> Self {
 		Self::new_padded(data, window_dim, hop_dim, 0, 0)
@@ -32,21 +30,20 @@ impl<'a, T, R, C, S, W, H> WindowedRowIter<'a, T, R, C, S, W, H>
 
 		Self {
 			storage: data,
-			buffer: ContainerCM::zeros(window_dim, data.col_dim()),
+			buffer: ContainerCM::zeros(Size::new(window_dim, data.col_dim())),
 			window_size: window_dim,
 			hop_size: hop_dim,
 			cursor,
 			cursor_end,
 			window_count,
-			_phantoms: PhantomData
 		}
 	}
 }
 
-impl<'a, T, R, C, S, W, H> WindowedIter<'a, T, W, H> for WindowedRowIter<'a, T, R, C, S, W, H>
-	where T: Scalar, R: Dim, C: Dim, S: Storage<T, R, C>, W: Dim, H: Dim
+impl<'a, T, S, W, H> WindowedIter<'a, T, W, H> for WindowedRowIter<'a, T, S, W, H>
+	where T: Scalar, S: Storage<T>, W: Dim, H: Dim
 {
-	type WC = C;
+	type WC = S::Cols;
 	type WCS = W;
 	type WR = W;
 	type WRS = U1;
@@ -61,7 +58,7 @@ impl<'a, T, R, C, S, W, H> WindowedIter<'a, T, W, H> for WindowedRowIter<'a, T, 
 			self.cursor += self.hop_size() as isize;
 
 			let copy_start = max(start, 0) as usize;
-			let copy_end = min(end, self.storage.row_count()) ;
+			let copy_end = min(end, self.storage.rows()) ;
 			let pad_left = (copy_start as isize - start) as usize;
 			let pad_right = end - copy_end;
 
@@ -73,16 +70,16 @@ impl<'a, T, R, C, S, W, H> WindowedIter<'a, T, W, H> for WindowedRowIter<'a, T, 
 			}
 
 			if pad_left > 0 {
-				assign_all(self.buffer.slice_rows_as_mut_iter(0..pad_left), T::default());
+				assign_all(self.buffer.as_row_range_iter_mut(0..pad_left), T::default());
 			}
 
 			if pad_right > 0 {
-				assign_all(self.buffer.slice_rows_as_mut_iter((self.window_size() - pad_right)..self.window_size()), T::default());
+				assign_all(self.buffer.as_row_range_iter_mut((self.window_size() - pad_right)..self.window_size()), T::default());
 			}
 
 			copy_all(
-				self.buffer.slice_rows_as_mut_iter(pad_left..(self.window_size() - pad_right)),
-				self.storage.slice_rows_as_iter(copy_start..copy_end)
+				self.buffer.as_row_range_iter_mut(pad_left..(self.window_size() - pad_right)),
+				self.storage.as_row_range_iter(copy_start..copy_end)
 			);
 
 			Some(
@@ -99,8 +96,8 @@ impl<'a, T, R, C, S, W, H> WindowedIter<'a, T, W, H> for WindowedRowIter<'a, T, 
 }
 
 
-impl<'a, T, R, C, S, W, H> WindowedIterMut<'a, T, W, H> for WindowedRowIter<'a, T, R, C, S, W, H>
-	where T: Scalar, R: Dim, C: Dim, S: Storage<T, R, C>, W: Dim, H: Dim
+impl<'a, T, S, W, H> WindowedIterMut<'a, T, W, H> for WindowedRowIter<'a, T, S, W, H>
+	where T: Scalar, S: Storage<T>, W: Dim, H: Dim
 {
 	fn next_window_mut<'at: 'b, 'b>(&'at mut self) -> Option<SliceMut<'b, T, Self::WR, Self::WRS, Self::WC, Self::WCS>> {
 		let start = self.cursor;
@@ -112,21 +109,21 @@ impl<'a, T, R, C, S, W, H> WindowedIterMut<'a, T, W, H> for WindowedRowIter<'a, 
 			self.cursor += self.hop_size() as isize;
 
 			let copy_start = max(start, 0) as usize;
-			let copy_end = min(end, self.storage.row_count()) ;
+			let copy_end = min(end, self.storage.rows()) ;
 			let pad_left = (copy_start as isize - start) as usize;
 			let pad_right = end - copy_end;
 
 			if pad_left > 0 {
-				assign_all(self.buffer.slice_rows_as_mut_iter(0..pad_left), T::default());
+				assign_all(self.buffer.as_row_range_iter_mut(0..pad_left), T::default());
 			}
 
 			if pad_right > 0 {
-				assign_all(self.buffer.slice_rows_as_mut_iter((self.window_size() - pad_right)..self.window_size()), T::default());
+				assign_all(self.buffer.as_row_range_iter_mut((self.window_size() - pad_right)..self.window_size()), T::default());
 			}
 
 			copy_all(
-				self.buffer.slice_rows_as_mut_iter(pad_left..(self.window_size() - pad_right)),
-				self.storage.slice_rows_as_iter(copy_start..copy_end)
+				self.buffer.as_row_range_iter_mut(pad_left..(self.window_size() - pad_right)),
+				self.storage.as_row_range_iter(copy_start..copy_end)
 			);
 
 			Some(

@@ -14,14 +14,14 @@ use std::cmp::max;
 /// * `p` - upsampling rate
 /// * `q` - downsampling rate
 #[allow(non_snake_case)]
-pub fn resample<D, S>(s: &S, p: usize, q: usize) -> RowVec<f64, Dynamic>
-	where D: Dim, S: RowVecStorage<f64, D>
+pub fn resample<S>(s: &S, p: usize, q: usize) -> RowVec<f64, Dynamic>
+	where S: RowVecStorage<f64>
 {
 	let gcd = functions::gcd_t(p, q);
 	let (p, q) = (p / gcd, q / gcd);
 
 	if q == p {
-		return s.transmute_dims(U1, Dynamic::new(s.col_count()), s.row_stride_dim(), s.col_stride_dim()).clone_owned();
+		return s.transmute_dims(U1, Dynamic::new(s.cols()), s.row_stride_dim(), s.col_stride_dim()).clone_owned();
 	}
 	let K = max(p, q);
 
@@ -36,14 +36,14 @@ pub fn resample<D, S>(s: &S, p: usize, q: usize) -> RowVec<f64, Dynamic>
 	let window = window::kaiser(D!(filter_len), 5.);
 	filter *= &(window * p as f64);
 
-	let length = s.col_count();
+	let length = s.cols();
 	let output_size = functions::quotient_ceil(length * p, q);
 
 	// Pad the filter
 	let pad_before = q - filter_len_half % q;
 	let delay = (filter_len_half + pad_before) / q;
 	let pad_after = max(((output_size + delay) * q) as isize - ((length - 1) * p + (pad_before + filter_len)) as isize, 0) as usize;
-	let mut h = rvec_zeros!(Dynamic::new(pad_before + filter_len + pad_after); f64);
+	let mut h = rvec_zeros!(D!(pad_before + filter_len + pad_after); f64);
 	h.slice_cols_mut(SizedRange::new(pad_before, filter.col_dim())).copy_from(&filter);
 
 	// Resample upfirdn

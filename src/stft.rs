@@ -19,7 +19,7 @@ use rayon::prelude::*;
 #[allow(non_snake_case)]// TODO: use size hinting at more places
 pub fn calculate_stft<C, S, W, H>(s: &S, window: &ContainerRM<f64, U1, W>, hop_dim: H, pad: bool, sr: f64)
 	-> (ContainerCM<c64, <<W as DimDiv<U2>>::Output as DimAdd<U1>>::Output, Dynamic>, f64)
-	where C: Dim, H: Dim, S: Storage<f64, U1, C>,
+	where C: Dim, H: Dim, S: Storage<f64> + StorageSize<Rows=U1, Cols=C>,
 	      W: Dim + DimDiv<U2>,
 	      <W as DimDiv<U2>>::Output: DimAdd<U1>
 {
@@ -28,7 +28,10 @@ pub fn calculate_stft<C, S, W, H>(s: &S, window: &ContainerRM<f64, U1, W>, hop_d
 
 	let padding = if pad { window_dim.value() / 2 } else { 0 };
 	let mut window_iter = WindowedColIter::new_padded(s, window.col_dim(), hop_dim, padding, padding);
-	let mut S = ContainerCM::zeros(half_window_dim, Dynamic::new(window_iter.window_count()));
+	let mut S = ContainerCM::zeros(Size::new(
+		half_window_dim,
+		Dynamic::new(window_iter.window_count())
+	));
 	let mut plan = R2CPlan64::aligned(&[window_dim.value()], Flag::Estimate).unwrap();
 
 	let mut cursor = 0;
@@ -36,7 +39,7 @@ pub fn calculate_stft<C, S, W, H>(s: &S, window: &ContainerRM<f64, U1, W>, hop_d
 		w *= window;
 
 		let mut wS = S.slice_cols_mut(cursor);
-		plan.r2c(w.as_mut_slice(), wS.as_mut_slice()).unwrap();
+		plan.r2c(w.as_slice_mut(), wS.as_slice_mut()).unwrap();
 
 		cursor += 1;
 	}
@@ -48,7 +51,7 @@ pub fn calculate_freq<W>(window_size: W) -> ContainerRM<f64, U1, <<W as DimDiv<U
 	where W: Dim + DimDiv<U2>, <W as DimDiv<U2>>::Output: DimAdd<U1>
 {
 	let half_window_dim = <W as DimDiv<U2>>::div(window_size, U2).add(U1);
-	ContainerRM::regspace_rows(U1, half_window_dim, 0.) / 2.
+	ContainerRM::regspace(Size::new(U1, half_window_dim), RowAxis, 0.) / 2.
 }
 
 pub fn freq_index(f: f64) -> usize { (f * 2.).round() as usize }
@@ -63,20 +66,23 @@ pub fn freq_index(f: f64) -> usize { (f * 2.).round() as usize }
 /// * `freqs` - frequencies thet need to be sampled
 /// * `sr` - signal sampling rate
 #[allow(non_snake_case)]
-pub fn calculate_fourier_coefficients<C, S, W, H, F>(s: &S, window: &ContainerRM<f64, U1, W>, hop_dim: H, freqs: &RowVec<f64, F>, sr: f64)
+pub fn calculate_fourier_coefficients<S, W, H, F>(s: &S, window: &ContainerRM<f64, U1, W>, hop_dim: H, freqs: &RowVec<f64, F>, sr: f64)
 	-> (ContainerRM<c64, F, Dynamic>, f64)
-	where C: Dim, H: Dim, S: RowVecStorage<f64, C>, F: Dim,
+	where H: Dim, S: RowVecStorage<f64>, F: Dim,
 	      W: Dim + DimDiv<U2>
 {
 	let window_dim = window.col_dim();
 	let overlap = window_dim.value() - hop_dim.value();
 
-	let two_pi_t = ContainerRM::regspace_rows(U1, window_dim, 0.) * (f64::consts::PI * 2. / sr);
-	let window_count = (s.col_count() - overlap) / (window_dim.value() - overlap);
+	let two_pi_t = ContainerRM::regspace(Size::new(U1, window_dim), RowAxis, 0.) * (f64::consts::PI * 2. / sr);
+	let window_count = (s.cols() - overlap) / (window_dim.value() - overlap);
 
-	let mut S = ContainerRM::zeros(freqs.col_dim(), Dynamic::new(window_count));
+	let mut S = ContainerRM::zeros(Size::new(
+		freqs.col_dim(),
+		Dynamic::new(window_count)
+	));
 
-	S.as_row_slice_mut_iter() // todo: as_row_slice_par_mut_iter
+	S.as_row_slice_iter_mut() // todo: as_row_slice_par_mut_iter
 		.zip(freqs.as_iter())
 		.for_each(|(mut row, f)| {
 			let two_pi_ft = &two_pi_t * *f;

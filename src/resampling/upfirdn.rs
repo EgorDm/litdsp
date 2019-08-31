@@ -35,12 +35,14 @@ unsafe impl<T: Scalar> Sync for Holder<T> {}
 
 impl<T: Scalar + Float> Upfirdn<T> {
 	pub fn new(p: usize, q: usize, coefs: RowVec<T, Dynamic>) -> Self {
-		let coefs_per_phase = functions::quotient_ceil(coefs.size(), p);
-		let mut coefs_t = ContainerRM::zeros(D!(p), D!(coefs_per_phase));
+		let coefs_per_phase = functions::quotient_ceil(coefs.len(), p);
+		let mut coefs_t = ContainerRM::zeros(
+			Size::new(D!(p), D!(coefs_per_phase))
+		);
 
 		for r in 0..p {
 			for c in 0..coefs_per_phase {
-				if c * p + r < coefs.size() {
+				if c * p + r < coefs.len() {
 					coefs_t[(coefs_per_phase - 1 - c) + r * coefs_per_phase] = coefs[c * p + r]
 				}
 			}
@@ -55,20 +57,20 @@ impl<T: Scalar + Float> Upfirdn<T> {
 
 	pub fn coefs_per_phase(&self) -> usize { self.coefs_per_phase }
 
-	pub fn apply_parallel<D, S>(&self, input: &S) -> RowVec<T, Dynamic>
-		where D: Dim, S: RowVecStorage<T, D>
+	pub fn apply_parallel<S>(&self, input: &S) -> RowVec<T, Dynamic>
+		where S: RowVecStorage<T>
 	{
-		let mut ret = rvec_zeros!(Dynamic::new(self.out_count(input.col_count())));
+		let mut ret = rvec_zeros!(Dynamic::new(self.out_count(input.cols())));
 
 		// TODO: this whole thing is built around shifting pointers. How to keep is safe without speed penalty?
 		unsafe {
-			let start = input.get_ptr_unchecked(0, 0);
+			let start = input.as_ptr();
 			let holder = Holder { start };
 			//let mut cursor = start; // Equal to (i * q) / p
 			//let mut phase = 0; // Equal to (i * q) % p
 			let window_size_max = self.coefs_per_phase as isize - 1;
 
-			ret.as_mut_slice().par_iter_mut().enumerate().for_each(|(i, out_cursor)| {
+			ret.as_slice_mut().par_iter_mut().enumerate().for_each(|(i, out_cursor)| {
 				let iq = i * self.q;
 				let phase = iq % self.p;
 				let cursor = holder.start.offset((iq / self.p) as isize);
@@ -91,19 +93,19 @@ impl<T: Scalar + Float> Upfirdn<T> {
 	}
 
 	#[allow(dead_code)]
-	pub fn apply<D, S>(&self, input: &S) -> RowVec<T, Dynamic>
-		where D: Dim, S: RowVecStorage<T, D>
+	pub fn apply<S>(&self, input: &S) -> RowVec<T, Dynamic>
+		where S: RowVecStorage<T>
 	{
-		let mut ret = rvec_zeros!(Dynamic::new(self.out_count(input.col_count())));
+		let mut ret = rvec_zeros!(Dynamic::new(self.out_count(input.cols())));
 
 		// TODO: this whole thing is built around shifting pointers. How to keep is safe without speed penalty?
 		unsafe {
-			let start = input.get_ptr_unchecked(0, 0);
+			let start = input.as_ptr();
 			let mut cursor = start; // Equal to (i * q) / p
 			let mut phase = 0; // Equal to (i * q) % p
 			let window_size = self.coefs_per_phase as isize - 1;
 
-			for out_cursor in ret.as_mut_slice().iter_mut() {
+			for out_cursor in ret.as_slice_mut().iter_mut() {
 				let mut acc = T::default();
 				let window = min(offset_from(cursor, start), window_size);
 				let mut h = self.coefs_t.as_row_ptr(phase).offset(window_size - window);
@@ -131,9 +133,8 @@ impl<T: Scalar + Float> Upfirdn<T> {
 /// * `p` - upsampling rate
 /// * `q` - downsampling rate
 /// * `coefs` - FIR filter
-pub fn upfirdn<T, D, S>(s: &S, p: usize, q: usize, coefs: RowVec<T, Dynamic>)
-	-> RowVec<T, Dynamic>
-	where T: Scalar + Float, D: Dim, S: RowVecStorage<T, D>
+pub fn upfirdn<T, S>(s: &S, p: usize, q: usize, coefs: RowVec<T, Dynamic>) -> RowVec<T, Dynamic>
+	where T: Scalar + Float, S: RowVecStorage<T>
 {
 	let m = Upfirdn::new(p, q, coefs);
 	let padding = rvec_zeros!(D!(m.coefs_per_phase()); T);

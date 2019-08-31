@@ -6,10 +6,10 @@ use crate::functions::*;
 /// # Arguments
 /// * `size` - Nr of taps
 pub fn hanning<D: Dim>(size: D) -> RowVec<f64, D> {
-	let mut w = RowVec::zeros(U1, size);
+	let mut w = RowVec::zeros(Size::new(U1, size));
 	let n = (size.value() - 1) as f64;
 	for i in 0..size.value() {
-		*w.get_mut_at(i) = 0.5 - 0.5 * (f64::consts::PI * 2. * i as f64 / n).cos();
+		w[i] = 0.5 - 0.5 * (f64::consts::PI * 2. * i as f64 / n).cos();
 	}
 	w
 }
@@ -18,22 +18,22 @@ pub fn hanning<D: Dim>(size: D) -> RowVec<f64, D> {
 /// # Arguments
 /// * `size` - Nr of taps
 pub fn hamming<D: Dim>(size: D) -> RowVec<f64, D> {
-	let mut w = RowVec::zeros(U1, size);
+	let mut w = RowVec::zeros(Size::new(U1, size));
 	let n = (size.value() - 1) as f64;
-	for i in 0..size.value() {
-		*w.get_mut_at(i) = 0.54 - 0.46 * (f64::consts::PI * 2. * i as f64 / n).cos();
+	for i in 0..size.value() { // TODO: enumerate
+		w[i] = 0.54 - 0.46 * (f64::consts::PI * 2. * i as f64 / n).cos();
 	}
 	w
 }
 
 /// Constant size window
 pub fn constant<D: Dim>(size: D) -> RowVec<f64, D> {
-	RowVec::regspace_rows(U1, size, 1.)
+	RowVec::regspace(Size::new(U1, size), RowAxis, 1.)
 }
 
 /// Sin window
 pub fn sinw<D: Dim>(size: D, beta: f64) -> RowVec<f64, D> {
-	let w = RowVec::regspace_rows(U1, size, 0.);
+	let w = RowVec::regspace(Size::new(U1, size), RowAxis, 0.);
 	(w * (f64::consts::PI / size.value() as f64)).sin().pow(beta)
 }
 
@@ -46,7 +46,7 @@ pub fn sinw<D: Dim>(size: D, beta: f64) -> RowVec<f64, D> {
 /// * `beta` - Beta factor
 #[allow(non_snake_case)]
 pub fn kaiser<D: Dim>(size: D, beta: f64) -> RowVec<f64, D> {
-	let mut h = RowVec::zeros(U1, size);
+	let mut h = RowVec::zeros(Size::new(U1, size));
 	let bb = besseli0(beta);
 	let N  = size.value();
 	for (i, x) in h.as_iter_mut().enumerate() {

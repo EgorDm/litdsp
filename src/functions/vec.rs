@@ -10,21 +10,20 @@ use num_traits::Signed;
 /// * `values_in` - Input values
 /// * `axis_out` - Output axis
 /// * `values_out` - Output values
-pub fn interp1_nearest_cols<TA, TV, AI, AIS, IS, AO, AOS, OS, C>(axis_in: &AIS, values_in: &IS, axis_out: &AOS, values_out: &mut OS)
-	where TA: ElementaryScalar + Signed, TV: Scalar,
-	      AI: Dim, AO: Dim, C: Dim,
-	      AIS: ColVecStorage<TA, AI>, IS: Storage<TV, AI, C>,
-	      AOS: ColVecStorage<TA, AO>, OS: StorageMut<TV, AO, C>
+pub fn interp1_nearest_cols<TA, TV, AIS, IS, AOS, OS, C>(axis_in: &AIS, values_in: &IS, axis_out: &AOS, values_out: &mut OS)
+	where TA: Scalar + Signed, TV: Scalar, C: Dim,
+	      AIS: ColVecStorage<TA>, IS: Storage<TV> + StorageSize<Rows=AIS::Rows, Cols=C>,
+	      AOS: ColVecStorage<TA>, OS: StorageMut<TV> + StorageSize<Rows=AOS::Rows, Cols=C>
 {
-	assert!(axis_in.row_count() == values_in.row_count() && axis_out.row_count() == axis_out.row_count() && values_in.col_count() == values_out.col_count(), "Container dimensions are not valid");
+	assert!(axis_in.rows() == values_in.rows() && axis_out.rows() == axis_out.rows() && values_in.cols() == values_out.cols(), "Container dimensions are not valid");
 	let (axis_in_min, axis_in_max) = match axis_in.as_col_iter().minmax() {
 		MinMaxResult::NoElements => (TA::default(), TA::default()), // Should not be possible
 		MinMaxResult::OneElement(v) => (*v, *v),
 		MinMaxResult::MinMax(min, max) => (*min, *max),
 	};
 
-	let axis_size_in = axis_in.row_count();
-	let axis_size_out = axis_out.row_count();
+	let axis_size_in = axis_in.rows();
+	let axis_size_out = axis_out.rows();
 
 	let mut best_j = 0;
 
