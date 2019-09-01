@@ -70,7 +70,7 @@ impl<T: Scalar + Float> Upfirdn<T> {
 			//let mut phase = 0; // Equal to (i * q) % p
 			let window_size_max = self.coefs_per_phase as isize - 1;
 
-			ret.as_slice_mut().par_iter_mut().enumerate().for_each(|(i, out_cursor)| {
+			ret.par_iter_mut().enumerate().for_each(|(i, out_cursor)| {
 				let iq = i * self.q;
 				let phase = iq % self.p;
 				let cursor = holder.start.offset((iq / self.p) as isize);

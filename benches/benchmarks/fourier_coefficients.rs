@@ -4,7 +4,7 @@ use litaudio::AudioStorage;
 use litcontainers::*;
 use litdsp::stft;
 
-// TODO: optimize. Goal 397ms -> 297ms
+// TODO: optimize. Goal 135.70ms -> lower  better than c++
 fn compute_fourier_coefficients_benchmark(c: &mut Criterion) {
 	let audio = setup_audio();
 

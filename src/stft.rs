@@ -34,7 +34,7 @@ pub fn calculate_stft<C, S, W, H>(s: &S, window: &ContainerRM<f64, U1, W>, hop_d
 	));
 	let mut plan = R2CPlan64::aligned(&[window_dim.value()], Flag::Estimate).unwrap();
 
-	let mut cursor = 0;
+	let mut cursor = 0; // TODO: create paralallel iter
 	while let Some(mut w) = window_iter.next_window_mut() {
 		w *= window;
 
@@ -82,8 +82,9 @@ pub fn calculate_fourier_coefficients<S, W, H, F>(s: &S, window: &ContainerRM<f6
 		Dynamic::new(window_count)
 	));
 
-	S.as_row_slice_iter_mut() // todo: as_row_slice_par_mut_iter
-		.zip(freqs.as_iter())
+	S.as_row_slice_iter_mut()
+		.into_par_iter()
+		.zip(row_iter(freqs, 0).into_par_iter())
 		.for_each(|(mut row, f)| {
 			let two_pi_ft = &two_pi_t * *f;
 			let cosine = (&two_pi_ft).cos();
