@@ -2,6 +2,26 @@
 
 use litcontainers::*;
 use litdsp::*;
+use litdsp::algorithms::{STFTF64Feed, ISTFTF64Feed};
+
+#[allow(non_snake_case)]
+#[test]
+fn fftw_feeds() {
+	let freq = 1.;
+	let fr = 6.;
+	let window_size = U40;
+	let s = wave::generate_wave(freq, window_size, 0, fr, false);
+	let mut stft = STFTF64Feed::new(window_size);
+	let mut istft = ISTFTF64Feed::new(window_size);
+
+	let mut S = RowVec::zeros(Size::new(U1, stft.out_dim()));
+	stft.next(&s, &mut S);
+	let mut sa = RowVec::zeros(Size::new(U1, istft.out_dim()));
+	istft.next(&S, &mut sa);
+	sa /= window_size.value() as f64;
+
+	s.foreach_zip(sa.iter(), |l, r| assert!((l - r).abs() < 0.000001));
+}
 
 #[allow(non_snake_case)]
 #[test]
@@ -27,7 +47,6 @@ fn stft() {
 }
 
 #[allow(non_snake_case)]
-
 #[test]
 fn compute_fourier_coefficients() {
 	let freq = 1.;
