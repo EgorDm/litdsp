@@ -18,7 +18,6 @@ fn fftw_feeds() {
 	stft.next(&s, &mut S);
 	let mut sa = RowVec::zeros(Size::new(U1, istft.out_dim()));
 	istft.next(&S, &mut sa);
-	sa /= window_size.value() as f64;
 
 	s.foreach_zip(sa.iter(), |l, r| assert!((l - r).abs() < 0.000001));
 }

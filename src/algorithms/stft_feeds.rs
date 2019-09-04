@@ -1,6 +1,7 @@
 use litcontainers::*;
 use fftw::plan::*;
 use fftw::types::Flag;
+use num_traits::{Float, cast::cast};
 
 pub struct STFTFeed<P, W>
 	where P: R2CPlan, P::Real: Element, P::Complex: Element,
@@ -39,7 +40,7 @@ pub type STFTF64Feed<W> = STFTFeed<R2CPlan64, W>;
 pub type STFTF32Feed<W> = STFTFeed<R2CPlan32, W>;
 
 pub struct ISTFTFeed<P, W>
-	where P: C2RPlan, P::Real: Element, P::Complex: Element,
+	where P: C2RPlan, P::Real: Element + Float, P::Complex: Element,
 	      W: Dim, W: Dim + DimDiv<U2>, <W as DimDiv<U2>>::Output: DimAdd<U1>
 {
 	window_dim: W,
@@ -47,7 +48,7 @@ pub struct ISTFTFeed<P, W>
 }
 
 impl<P, W> ISTFTFeed<P, W>
-	where P: C2RPlan, P::Real: Element, P::Complex: Element,
+	where P: C2RPlan, P::Real: Element + Float, P::Complex: Element,
 	      W: Dim, W: Dim + DimDiv<U2>, <W as DimDiv<U2>>::Output: DimAdd<U1>
 {
 	pub fn new(window_dim: W) -> Self {
@@ -68,6 +69,8 @@ impl<P, W> ISTFTFeed<P, W>
 		debug_assert_eq!(output.len(), self.out_len());
 		let input_slice = input.as_slice() as *const _; // Input does not actually change but must be provided as mut ref
 		self.plan.c2r(unsafe { &mut *(input_slice as *mut _) }, output.as_slice_mut()).unwrap();
+		let window_len = cast(output.len()).unwrap();
+		output.mapv_inplace(|v| v /  window_len);
 	}
 }
 

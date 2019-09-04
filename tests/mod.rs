@@ -5,3 +5,4 @@ mod stft;
 mod filters;
 mod misc;
 mod functions;
+mod phase_vocoder;

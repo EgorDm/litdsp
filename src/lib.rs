@@ -6,6 +6,7 @@ pub mod functions;
 pub mod filters;
 pub mod constants;
 pub mod resampling;
+pub mod algorithms;
 
 pub use functions::*;
 
