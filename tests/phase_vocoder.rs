@@ -48,8 +48,9 @@ pub fn phase_vocoder_audio() {
 	let result = algorithms::calculate_pv(&audio, audio.sample_rate() as f64, 2., U2048::name());
 	let res = result.into_audio(audio.sample_rate() / 2, Deinterleaved);
 
-	litaudioio::write_audio(
-		&PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tmp/test_audio.wav"),
-		&res
+	let target: ContainerRM<f64, U1, Dynamic> = litio::read_binary_file(
+		&PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("assets/test_audio_vc_a2.lit")
 	).unwrap();
+
+	res.foreach_zip(target.iter(), |a, b| assert_eq!(*a, b));
 }

@@ -13,10 +13,11 @@ itertools = "0.8.0"
 rayon = "1.1.0"
 typenum = "1.10.0"
 
-
 [dev-dependencies]
+litio = {path = "../litcontainers/litio"}
 litaudioio = {path = "../litaudioio"}
 criterion = "0.2"
+clap = "2.33.0"
 
 [[bench]]
 name = "comparison_bench"
