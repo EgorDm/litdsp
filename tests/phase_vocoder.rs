@@ -5,7 +5,7 @@ use std::path::PathBuf;
 use typenum::consts::U2048;
 
 pub fn setup_audio() -> AudioDeinterleaved<f64, U1, Dynamic> {
-	let mut in_path = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("assets/test_audio.wav");
+	let in_path = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("assets/test_audio.wav");
 	litaudioio::read_audio(in_path.as_path()).unwrap()
 }
 
@@ -53,4 +53,19 @@ pub fn phase_vocoder_audio() {
 	).unwrap();
 
 	res.foreach_zip(target.iter(), |a, b| assert_eq!(*a, b));
+}
+
+// TODO: implement now we can split container in chunks
+#[test]
+pub fn phase_vocoder_parallel_audio() {
+	let audio = setup_audio();
+
+	//let result = algorithms::calculate_pv_test(&audio, audio.sample_rate() as f64, 2., U2048::name());
+	//let res = result.into_audio(audio.sample_rate() / 2, Deinterleaved);
+
+	/*let target: ContainerRM<f64, U1, Dynamic> = litio::read_binary_file(
+		&PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("assets/test_audio_vc_a2.lit")
+	).unwrap();
+
+	res.foreach_zip(target.iter(), |a, b| assert_eq!(*a, b));*/
 }

@@ -10,4 +10,5 @@ criterion_main!(
 	resample::benchmark,
 	stft::benchmark,
 	fourier_coefficients::benchmark,
+	time_scaling::benchmark,
 );
